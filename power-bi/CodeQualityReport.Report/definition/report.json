@@ -1,0 +1,61 @@
+{
+  "themeCollection": {
+    "baseTheme": {
+      "name": "CY24SU06",
+      "reportVersionAtImport": "5.56",
+      "type": "SharedResources"
+    }
+  },
+  "layoutOptimization": 0,
+  "resourcePackages": [],
+  "sections": [
+    {
+      "name": "QualityOverview",
+      "displayName": "Quality Overview",
+      "displayOption": 1,
+      "width": 1280,
+      "height": 720,
+      "ordinal": 0,
+      "config": "{\"visibility\":0}"
+    },
+    {
+      "name": "CoverageTrends",
+      "displayName": "Coverage Trends",
+      "displayOption": 1,
+      "width": 1280,
+      "height": 720,
+      "ordinal": 1,
+      "config": "{\"visibility\":0}"
+    },
+    {
+      "name": "ComplexityAnalysis",
+      "displayName": "Complexity Analysis",
+      "displayOption": 1,
+      "width": 1280,
+      "height": 720,
+      "ordinal": 2,
+      "config": "{\"visibility\":0}"
+    },
+    {
+      "name": "DuplicationReport",
+      "displayName": "Duplication Report",
+      "displayOption": 1,
+      "width": 1280,
+      "height": 720,
+      "ordinal": 3,
+      "config": "{\"visibility\":0}"
+    },
+    {
+      "name": "RepositoryDeepDive",
+      "displayName": "Repository Deep Dive",
+      "displayOption": 1,
+      "width": 1280,
+      "height": 720,
+      "ordinal": 4,
+      "config": "{\"visibility\":0,\"singleVisualGroup\":{\"displayState\":{\"mode\":1}}}"
+    }
+  ],
+  "config": "{\"version\":\"5.56\",\"defaultDrillFilterOtherVisuals\":true,\"activeSectionIndex\":0}",
+  "filters": "[]",
+  "publicCustomVisuals": []
+}

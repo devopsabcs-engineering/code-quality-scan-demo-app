@@ -1,0 +1,76 @@
+{
+  "name": "ComplexityAnalysis",
+  "displayName": "Complexity Analysis",
+  "displayOption": 1,
+  "width": 1280,
+  "height": 720,
+  "ordinal": 2,
+  "visualContainers": [
+    {
+      "name": "scatterCcnVsLines",
+      "position": { "x": 16, "y": 16, "z": 0, "width": 620, "height": 340 },
+      "visual": {
+        "visualType": "scatterChart",
+        "projections": {
+          "X": [{ "queryRef": "Fact_CodeQualityFindings.metric_value", "label": "Cyclomatic Complexity (CCN)" }],
+          "Y": [{ "queryRef": "Fact_CodeQualityFindings.line_number", "label": "Lines of Code" }],
+          "Details": [{ "queryRef": "Fact_CodeQualityFindings.function_name" }],
+          "Legend": [{ "queryRef": "Languages.display_name" }]
+        },
+        "title": "Complexity vs Lines of Code",
+        "objects": {
+          "referenceLine": [
+            {
+              "properties": {
+                "xAxis": { "value": 10, "label": "CCN Threshold", "style": "dashed", "color": "#FF4444" }
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "histogramComplexityDistribution",
+      "position": { "x": 644, "y": 16, "z": 1, "width": 620, "height": 340 },
+      "visual": {
+        "visualType": "clusteredBarChart",
+        "projections": {
+          "Category": [{ "queryRef": "Measures.[Complexity Bucket]" }],
+          "Y": [{ "queryRef": "Fact_CodeQualityFindings.function_name", "aggregation": "Count" }]
+        },
+        "title": "Complexity Distribution",
+        "description": "Distribution of functions across complexity buckets (1-5, 6-10, 11-15, 16-20, 20+)"
+      }
+    },
+    {
+      "name": "tableTopComplexFunctions",
+      "position": { "x": 16, "y": 364, "z": 2, "width": 1248, "height": 340 },
+      "visual": {
+        "visualType": "tableEx",
+        "projections": {
+          "Values": [
+            { "queryRef": "Fact_CodeQualityFindings.function_name" },
+            { "queryRef": "Fact_CodeQualityFindings.file_path" },
+            { "queryRef": "Fact_CodeQualityFindings.metric_value", "label": "CCN" },
+            { "queryRef": "Fact_CodeQualityFindings.line_number", "label": "Lines" },
+            { "queryRef": "Fact_CodeQualityFindings.repo_name" },
+            { "queryRef": "Languages.display_name", "label": "Language" },
+            { "queryRef": "Fact_CodeQualityFindings.severity" }
+          ]
+        },
+        "title": "Top 10 Most Complex Functions",
+        "objects": {
+          "general": [
+            {
+              "properties": {
+                "topN": 10,
+                "topNOrderBy": "Fact_CodeQualityFindings.metric_value",
+                "topNDirection": "Descending"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

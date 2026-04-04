@@ -1,0 +1,7 @@
+variables:
+  location: 'canadacentral'
+  serviceConnection: 'code-quality-scan-demo-app-ado-sc'
+  storageAccountName: 'stcqscandata'
+  containerName: 'scan-results'
+  adoOrg: 'MngEnvMCAP675646'
+  adoProject: 'Agentic Accelerator Framework'

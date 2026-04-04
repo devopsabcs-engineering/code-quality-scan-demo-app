@@ -1,0 +1,21 @@
+[project]
+name = "cq-demo-app-002"
+version = "1.0.0"
+description = "Inventory Management API — Python/Flask demo app with intentional code quality violations"
+requires-python = ">=3.12"
+dependencies = [
+    "flask>=3.0,<4.0",
+]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "D", "UP"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

@@ -1,0 +1,32 @@
+trigger: none
+
+pr:
+  branches:
+    include:
+      - main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+  - checkout: self
+
+  - script: |
+      npx mega-linter-runner --flavor dotnetweb -e VALIDATE_ALL_CODEBASE=false -e SARIF_REPORTER=true
+    displayName: 'Run MegaLinter (changed files only)'
+
+  - script: |
+      if [ -f "megalinter-reports/megalinter-report.sarif" ]; then
+        HIGH_COUNT=$(jq '[.runs[].results[] | select(.level == "error")] | length' megalinter-reports/megalinter-report.sarif)
+        if [ "$HIGH_COUNT" -gt 0 ]; then
+          echo "##vso[task.logissue type=error]$HIGH_COUNT HIGH/CRITICAL findings detected — blocking merge"
+          exit 1
+        fi
+      fi
+    displayName: 'Check for HIGH/CRITICAL findings'
+
+  - task: AdvancedSecurity-Publish@1
+    inputs:
+      SarifFileDirectory: 'megalinter-reports'
+    condition: always()
+    displayName: 'Publish SARIF to Advanced Security'

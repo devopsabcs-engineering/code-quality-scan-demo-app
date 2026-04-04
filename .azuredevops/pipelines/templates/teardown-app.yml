@@ -1,0 +1,15 @@
+parameters:
+  - name: resourceGroup
+    type: string
+
+steps:
+  - task: AzureCLI@2
+    displayName: 'Delete Resource Group ${{ parameters.resourceGroup }}'
+    inputs:
+      azureSubscription: '$(serviceConnection)'
+      scriptType: 'bash'
+      scriptLocation: 'inlineScript'
+      inlineScript: |
+        echo "Deleting resource group ${{ parameters.resourceGroup }}..."
+        az group delete --name ${{ parameters.resourceGroup }} --yes --no-wait
+        echo "🗑️ Resource group ${{ parameters.resourceGroup }} deletion initiated."

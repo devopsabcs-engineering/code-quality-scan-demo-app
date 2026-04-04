@@ -1,0 +1,28 @@
+name: Code Quality Lint Gate
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  security-events: write
+  contents: read
+
+jobs:
+  lint-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run MegaLinter
+        uses: oxsecurity/megalinter@v8
+        env:
+          VALIDATE_ALL_CODEBASE: false
+          SARIF_REPORTER: true
+
+      - name: Check for HIGH/CRITICAL findings
+        run: |
+          if jq -e '[.runs[].results[] | select(.level == "error")] | length > 0' megalinter-reports/megalinter-report.sarif; then
+            echo "::error::HIGH/CRITICAL findings detected — blocking merge"
+            exit 1
+          fi

@@ -1,0 +1,56 @@
+trigger: none
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  - template: variables/common.yml
+
+stages:
+  - stage: Deploy
+    displayName: 'Deploy All Demo Apps'
+    jobs:
+      - job: DeployApp001
+        displayName: 'Deploy cq-demo-app-001'
+        steps:
+          - template: templates/deploy-app.yml
+            parameters:
+              appName: 'cq-demo-app-001'
+              resourceGroup: 'rg-cq-demo-001'
+              appDir: 'cq-demo-app-001'
+
+      - job: DeployApp002
+        displayName: 'Deploy cq-demo-app-002'
+        steps:
+          - template: templates/deploy-app.yml
+            parameters:
+              appName: 'cq-demo-app-002'
+              resourceGroup: 'rg-cq-demo-002'
+              appDir: 'cq-demo-app-002'
+
+      - job: DeployApp003
+        displayName: 'Deploy cq-demo-app-003'
+        steps:
+          - template: templates/deploy-app.yml
+            parameters:
+              appName: 'cq-demo-app-003'
+              resourceGroup: 'rg-cq-demo-003'
+              appDir: 'cq-demo-app-003'
+
+      - job: DeployApp004
+        displayName: 'Deploy cq-demo-app-004'
+        steps:
+          - template: templates/deploy-app.yml
+            parameters:
+              appName: 'cq-demo-app-004'
+              resourceGroup: 'rg-cq-demo-004'
+              appDir: 'cq-demo-app-004'
+
+      - job: DeployApp005
+        displayName: 'Deploy cq-demo-app-005'
+        steps:
+          - template: templates/deploy-app.yml
+            parameters:
+              appName: 'cq-demo-app-005'
+              resourceGroup: 'rg-cq-demo-005'
+              appDir: 'cq-demo-app-005'

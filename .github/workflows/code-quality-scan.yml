@@ -1,0 +1,35 @@
+name: Code Quality Scan
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * 1'
+
+permissions:
+  security-events: write
+  contents: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        app: ['001', '002', '003', '004', '005']
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: devopsabcs-engineering/cq-demo-app-${{ matrix.app }}
+
+      - name: Run MegaLinter
+        uses: oxsecurity/megalinter@v8
+        env:
+          VALIDATE_ALL_CODEBASE: true
+          SARIF_REPORTER: true
+
+      - name: Upload SARIF
+        uses: github/codeql-action/upload-sarif@v4
+        if: always()
+        with:
+          sarif_file: megalinter-reports/megalinter-report.sarif
+          category: code-quality-scan/${{ matrix.app }}

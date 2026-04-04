@@ -1,0 +1,72 @@
+trigger: none
+
+schedules:
+  - cron: '0 7 * * 1'
+    displayName: 'Weekly Monday 7 AM UTC (after scan)'
+    branches:
+      include:
+        - main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  - template: variables/common.yml
+
+strategy:
+  matrix:
+    app001:
+      appId: '001'
+      repoName: 'cq-demo-app-001'
+    app002:
+      appId: '002'
+      repoName: 'cq-demo-app-002'
+    app003:
+      appId: '003'
+      repoName: 'cq-demo-app-003'
+    app004:
+      appId: '004'
+      repoName: 'cq-demo-app-004'
+    app005:
+      appId: '005'
+      repoName: 'cq-demo-app-005'
+
+steps:
+  - checkout: self
+
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '3.12'
+
+  - script: |
+      pip install lizard
+    displayName: 'Install scanning tools'
+
+  - script: |
+      npx mega-linter-runner --flavor dotnetweb -e VALIDATE_ALL_CODEBASE=true -e SARIF_REPORTER=true
+    displayName: 'Run MegaLinter on $(repoName)'
+    workingDirectory: $(repoName)
+
+  - script: |
+      lizard --csv $(repoName)/src/ > $(Build.ArtifactStagingDirectory)/lizard-output.csv
+      python src/converters/lizard-to-sarif.py \
+        --input $(Build.ArtifactStagingDirectory)/lizard-output.csv \
+        --output $(Build.ArtifactStagingDirectory)/complexity-$(appId).sarif
+    displayName: 'Run complexity analysis'
+
+  - task: AzureCLI@2
+    inputs:
+      azureSubscription: '$(serviceConnection)'
+      scriptType: 'pscore'
+      scriptPath: 'scripts/scan-and-store.ps1'
+      arguments: >-
+        -StorageAccountName $(storageAccountName)
+        -ContainerName $(containerName)
+        -SarifDir $(Build.ArtifactStagingDirectory)
+        -AppId $(appId)
+    displayName: 'Upload SARIF results to ADLS Gen2'
+
+  - task: AdvancedSecurity-Publish@1
+    inputs:
+      SarifFileDirectory: '$(Build.ArtifactStagingDirectory)'
+    displayName: 'Publish SARIF to Advanced Security'

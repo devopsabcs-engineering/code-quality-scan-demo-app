@@ -1,0 +1,155 @@
+/// Fact table: Code Quality Findings
+/// One row per finding from scan results across all repositories and tools
+/// Central fact table in the star schema
+table Fact_CodeQualityFindings
+	lineageTag: f1a2b3c4-d5e6-7890-f1a2-b3c4d5e67890
+
+	/// Unique finding identifier (hash of rule_id + file_path + line_number + scan_date)
+	column finding_id
+		dataType: string
+		isHidden: false
+		lineageTag: f1000001-0000-0000-0000-000000000001
+		summarizeBy: none
+		sourceColumn: finding_id
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Source repository name — foreign key to Repositories dimension
+	column repo_name
+		dataType: string
+		isHidden: false
+		lineageTag: f1000002-0000-0000-0000-000000000002
+		summarizeBy: none
+		sourceColumn: repo_name
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Rule or check identifier (e.g., coverage-below-threshold, ccn-exceeded, no-unused-vars)
+	column rule_id
+		dataType: string
+		isHidden: false
+		lineageTag: f1000003-0000-0000-0000-000000000003
+		summarizeBy: none
+		sourceColumn: rule_id
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Severity level: CRITICAL, HIGH, MEDIUM, LOW
+	column severity
+		dataType: string
+		isHidden: false
+		lineageTag: f1000004-0000-0000-0000-000000000004
+		summarizeBy: none
+		sourceColumn: severity
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"ordinal":["CRITICAL","HIGH","MEDIUM","LOW"]}
+
+	/// Scanning tool that produced the finding — foreign key to ScanTools dimension
+	column tool_name
+		dataType: string
+		isHidden: false
+		lineageTag: f1000005-0000-0000-0000-000000000005
+		summarizeBy: none
+		sourceColumn: tool_name
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Date of the scan — foreign key to Dim_Date dimension
+	column scan_date
+		dataType: dateTime
+		isHidden: false
+		lineageTag: f1000006-0000-0000-0000-000000000006
+		summarizeBy: none
+		sourceColumn: scan_date
+		formatString: yyyy-MM-dd
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Source file path relative to repository root
+	column file_path
+		dataType: string
+		isHidden: false
+		lineageTag: f1000007-0000-0000-0000-000000000007
+		summarizeBy: none
+		sourceColumn: file_path
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Line number in the source file where the finding was detected
+	column line_number
+		dataType: int64
+		isHidden: false
+		lineageTag: f1000008-0000-0000-0000-000000000008
+		summarizeBy: none
+		sourceColumn: line_number
+		formatString: #,##0
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Function or method name where the finding was detected
+	column function_name
+		dataType: string
+		isHidden: false
+		lineageTag: f1000009-0000-0000-0000-000000000009
+		summarizeBy: none
+		sourceColumn: function_name
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Finding category: coverage, complexity, duplication, lint
+	column category
+		dataType: string
+		isHidden: false
+		lineageTag: f1000010-0000-0000-0000-000000000010
+		summarizeBy: none
+		sourceColumn: category
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"ordinal":["coverage","complexity","duplication","lint"]}
+
+	/// Measured value (e.g., cyclomatic complexity number, coverage %, duplicated line count)
+	column metric_value
+		dataType: decimal
+		isHidden: false
+		lineageTag: f1000011-0000-0000-0000-000000000011
+		summarizeBy: sum
+		sourceColumn: metric_value
+		formatString: #,##0.00
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Threshold that was exceeded to generate this finding
+	column threshold
+		dataType: decimal
+		isHidden: false
+		lineageTag: f1000012-0000-0000-0000-000000000012
+		summarizeBy: none
+		sourceColumn: threshold
+		formatString: #,##0.00
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Programming language — foreign key to Languages dimension
+	column language
+		dataType: string
+		isHidden: false
+		lineageTag: f1000013-0000-0000-0000-000000000013
+		summarizeBy: none
+		sourceColumn: language
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Fact_CodeQualityFindings = m
+		mode: import
+		source =
+			let
+				Source = CodeQualityDataSource
+			in
+				Source
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table

@@ -1,0 +1,60 @@
+trigger: none
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  - template: variables/common.yml
+
+stages:
+  - stage: Approve
+    displayName: 'Approve Teardown'
+    jobs:
+      - deployment: ApproveDestroy
+        displayName: 'Approve Resource Destruction'
+        environment: 'prod'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - script: echo "Teardown approved"
+                  displayName: 'Teardown approval confirmed'
+
+  - stage: Teardown
+    displayName: 'Teardown All Demo Apps'
+    dependsOn: Approve
+    jobs:
+      - job: TeardownApp001
+        displayName: 'Teardown cq-demo-app-001'
+        steps:
+          - template: templates/teardown-app.yml
+            parameters:
+              resourceGroup: 'rg-cq-demo-001'
+
+      - job: TeardownApp002
+        displayName: 'Teardown cq-demo-app-002'
+        steps:
+          - template: templates/teardown-app.yml
+            parameters:
+              resourceGroup: 'rg-cq-demo-002'
+
+      - job: TeardownApp003
+        displayName: 'Teardown cq-demo-app-003'
+        steps:
+          - template: templates/teardown-app.yml
+            parameters:
+              resourceGroup: 'rg-cq-demo-003'
+
+      - job: TeardownApp004
+        displayName: 'Teardown cq-demo-app-004'
+        steps:
+          - template: templates/teardown-app.yml
+            parameters:
+              resourceGroup: 'rg-cq-demo-004'
+
+      - job: TeardownApp005
+        displayName: 'Teardown cq-demo-app-005'
+        steps:
+          - template: templates/teardown-app.yml
+            parameters:
+              resourceGroup: 'rg-cq-demo-005'

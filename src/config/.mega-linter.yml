@@ -1,0 +1,54 @@
+---
+# MegaLinter configuration for Code Quality scanning
+# https://megalinter.io/latest/configuration/
+
+# Enable specific linters per language
+ENABLE_LINTERS:
+  - JAVASCRIPT_ES
+  - TYPESCRIPT_ES
+  - PYTHON_RUFF
+  - GO_GOLANGCI_LINT
+  - CSHARP_DOTNET_FORMAT
+  - JAVA_CHECKSTYLE
+  - REPOSITORY_JSCPD
+
+# SARIF output for all linters
+SARIF_REPORTER: true
+
+# Show elapsed time per linter
+SHOW_ELAPSED_TIME: true
+
+# Apply fixes inline (disable for CI — only report)
+APPLY_FIXES: none
+
+# Log level
+LOG_LEVEL: INFO
+
+# Exclude generated and dependency directories
+FILTER_REGEX_EXCLUDE: '(node_modules|\.next|bin|obj|target|vendor|\.git)/'
+
+# ESLint configuration
+JAVASCRIPT_ES_CONFIG_FILE: 'eslint.config.mjs'
+TYPESCRIPT_ES_CONFIG_FILE: 'eslint.config.mjs'
+
+# Ruff configuration
+PYTHON_RUFF_CONFIG_FILE: 'pyproject.toml'
+
+# golangci-lint configuration
+GO_GOLANGCI_LINT_CONFIG_FILE: '.golangci.yml'
+
+# jscpd configuration
+REPOSITORY_JSCPD_CONFIG_FILE: '.jscpd.json'
+
+# File extensions to scan
+JAVASCRIPT_ES_FILE_EXTENSIONS:
+  - '.js'
+  - '.jsx'
+  - '.mjs'
+TYPESCRIPT_ES_FILE_EXTENSIONS:
+  - '.ts'
+  - '.tsx'
+PYTHON_RUFF_FILE_EXTENSIONS:
+  - '.py'
+GO_GOLANGCI_LINT_FILE_EXTENSIONS:
+  - '.go'

@@ -1,0 +1,4 @@
+/// Database definition for Code Quality Report semantic model
+database CodeQualityReport
+	compatibilityLevel: 1567
+	model Model

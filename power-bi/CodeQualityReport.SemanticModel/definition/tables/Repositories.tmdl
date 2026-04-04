@@ -1,0 +1,58 @@
+/// Dimension table: Repositories
+/// Shared dimension for repository metadata with scan_domain column for cross-domain linking
+table Repositories
+	lineageTag: r1a2b3c4-d5e6-7890-r1a2-b3c4d5e67890
+
+	/// Repository name — primary key
+	column repo_name
+		dataType: string
+		isHidden: false
+		lineageTag: r1000001-0000-0000-0000-000000000001
+		summarizeBy: none
+		sourceColumn: repo_name
+		isKey: true
+
+		annotation SummarizationSetBy = Automatic
+
+	/// GitHub organization that owns the repository
+	column org
+		dataType: string
+		isHidden: false
+		lineageTag: r1000002-0000-0000-0000-000000000002
+		summarizeBy: none
+		sourceColumn: org
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Full URL to the repository on GitHub
+	column url
+		dataType: string
+		isHidden: false
+		lineageTag: r1000003-0000-0000-0000-000000000003
+		summarizeBy: none
+		sourceColumn: url
+		dataCategory: WebUrl
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Domain identifier for cross-domain reporting (e.g., CodeQuality, Accessibility, FinOps)
+	column scan_domain
+		dataType: string
+		isHidden: false
+		lineageTag: r1000004-0000-0000-0000-000000000004
+		summarizeBy: none
+		sourceColumn: scan_domain
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Repositories = m
+		mode: import
+		source =
+			let
+				Source = RepositoriesDataSource
+			in
+				Source
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table

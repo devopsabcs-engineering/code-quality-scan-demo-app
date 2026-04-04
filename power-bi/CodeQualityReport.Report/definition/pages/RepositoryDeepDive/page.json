@@ -1,0 +1,134 @@
+{
+  "name": "RepositoryDeepDive",
+  "displayName": "Repository Deep Dive",
+  "displayOption": 1,
+  "width": 1280,
+  "height": 720,
+  "ordinal": 4,
+  "drillthrough": {
+    "enabled": true,
+    "filters": [
+      {
+        "column": "Repositories.repo_name",
+        "type": "drillthrough"
+      }
+    ]
+  },
+  "visualContainers": [
+    {
+      "name": "cardRepoName",
+      "position": { "x": 16, "y": 16, "z": 0, "width": 400, "height": 48 },
+      "visual": {
+        "visualType": "card",
+        "projections": {
+          "Values": [{ "queryRef": "Repositories.repo_name" }]
+        },
+        "title": "Repository"
+      }
+    },
+    {
+      "name": "kpiRepoFindings",
+      "position": { "x": 424, "y": 16, "z": 1, "width": 200, "height": 48 },
+      "visual": {
+        "visualType": "card",
+        "projections": {
+          "Values": [{ "queryRef": "Fact_CodeQualityFindings.finding_id", "aggregation": "Count" }]
+        },
+        "title": "Total Findings"
+      }
+    },
+    {
+      "name": "kpiRepoCoverage",
+      "position": { "x": 632, "y": 16, "z": 2, "width": 200, "height": 48 },
+      "visual": {
+        "visualType": "card",
+        "projections": {
+          "Values": [{ "queryRef": "Measures.[Avg Coverage %]" }]
+        },
+        "title": "Avg Coverage %"
+      }
+    },
+    {
+      "name": "kpiRepoComplexity",
+      "position": { "x": 840, "y": 16, "z": 3, "width": 200, "height": 48 },
+      "visual": {
+        "visualType": "card",
+        "projections": {
+          "Values": [{ "queryRef": "Measures.[Avg Complexity]" }]
+        },
+        "title": "Avg CCN"
+      }
+    },
+    {
+      "name": "kpiRepoDuplication",
+      "position": { "x": 1048, "y": 16, "z": 4, "width": 200, "height": 48 },
+      "visual": {
+        "visualType": "card",
+        "projections": {
+          "Values": [{ "queryRef": "Measures.[Duplication %]" }]
+        },
+        "title": "Duplication %"
+      }
+    },
+    {
+      "name": "donutFindingsByCategory",
+      "position": { "x": 16, "y": 72, "z": 5, "width": 400, "height": 300 },
+      "visual": {
+        "visualType": "donutChart",
+        "projections": {
+          "Category": [{ "queryRef": "Fact_CodeQualityFindings.category" }],
+          "Y": [{ "queryRef": "Fact_CodeQualityFindings.finding_id", "aggregation": "Count" }]
+        },
+        "title": "Findings by Category"
+      }
+    },
+    {
+      "name": "stackedBarBySeverity",
+      "position": { "x": 424, "y": 72, "z": 6, "width": 424, "height": 300 },
+      "visual": {
+        "visualType": "stackedBarChart",
+        "projections": {
+          "Category": [{ "queryRef": "Fact_CodeQualityFindings.severity" }],
+          "Y": [{ "queryRef": "Fact_CodeQualityFindings.finding_id", "aggregation": "Count" }]
+        },
+        "title": "Findings by Severity"
+      }
+    },
+    {
+      "name": "lineChartTrend",
+      "position": { "x": 856, "y": 72, "z": 7, "width": 408, "height": 300 },
+      "visual": {
+        "visualType": "lineChart",
+        "projections": {
+          "Category": [{ "queryRef": "Dim_Date.Date" }],
+          "Y": [{ "queryRef": "Fact_CodeQualityFindings.finding_id", "aggregation": "Count" }],
+          "Series": [{ "queryRef": "Fact_CodeQualityFindings.category" }]
+        },
+        "title": "Finding Trend Over Time"
+      }
+    },
+    {
+      "name": "detailTableRepo",
+      "position": { "x": 16, "y": 380, "z": 8, "width": 1248, "height": 324 },
+      "visual": {
+        "visualType": "tableEx",
+        "projections": {
+          "Values": [
+            { "queryRef": "Fact_CodeQualityFindings.rule_id" },
+            { "queryRef": "Fact_CodeQualityFindings.severity" },
+            { "queryRef": "Fact_CodeQualityFindings.category" },
+            { "queryRef": "Fact_CodeQualityFindings.file_path" },
+            { "queryRef": "Fact_CodeQualityFindings.line_number" },
+            { "queryRef": "Fact_CodeQualityFindings.function_name" },
+            { "queryRef": "Fact_CodeQualityFindings.metric_value" },
+            { "queryRef": "Fact_CodeQualityFindings.threshold" },
+            { "queryRef": "ScanTools.display_name" },
+            { "queryRef": "Languages.display_name" },
+            { "queryRef": "Dim_Date.Date" }
+          ]
+        },
+        "title": "All Findings for Repository"
+      }
+    }
+  ]
+}

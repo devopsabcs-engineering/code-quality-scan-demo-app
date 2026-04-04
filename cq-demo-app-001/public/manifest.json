@@ -1,0 +1,9 @@
+{
+  "name": "CQ Demo App 001",
+  "short_name": "CQ-001",
+  "description": "E-Commerce Dashboard — Code Quality Demo App",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb"
+}

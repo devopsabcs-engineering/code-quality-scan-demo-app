@@ -1,0 +1,122 @@
+/// Model configuration for Code Quality Report
+/// Star schema: Fact_CodeQualityFindings at center with 4 dimension tables
+model Model
+	culture: en-US
+	defaultPowerBIDataSourceVersion: powerBI_V3
+	discourageImplicitMeasures: true
+	sourceQueryCulture: en-US
+
+	annotation PBI_QueryOrder = ["Fact_CodeQualityFindings","Repositories","ScanTools","Dim_Date","Languages"]
+
+	annotation PBI_ProTooling = ["DevMode"]
+
+	annotation PBIDesktopVersion = 2.138.1004.0
+
+	/// Total number of findings across all repositories and scans
+	measure 'Total Findings' = COUNTROWS('Fact_CodeQualityFindings')
+		formatString: #,##0
+		displayFolder: Overview
+
+	/// Average code coverage percentage across all findings in the coverage category
+	measure 'Avg Coverage %' = ```
+		CALCULATE(
+			AVERAGE('Fact_CodeQualityFindings'[metric_value]),
+			'Fact_CodeQualityFindings'[category] = "coverage"
+		)
+		```
+		formatString: 0.0"%"
+		displayFolder: Coverage
+
+	/// Average cyclomatic complexity across all findings in the complexity category
+	measure 'Avg Complexity' = ```
+		CALCULATE(
+			AVERAGE('Fact_CodeQualityFindings'[metric_value]),
+			'Fact_CodeQualityFindings'[category] = "complexity"
+		)
+		```
+		formatString: 0.0
+		displayFolder: Complexity
+
+	/// Number of files with coverage below the 80% threshold
+	measure 'Files Below Threshold' = ```
+		CALCULATE(
+			DISTINCTCOUNT('Fact_CodeQualityFindings'[file_path]),
+			'Fact_CodeQualityFindings'[category] = "coverage",
+			'Fact_CodeQualityFindings'[metric_value] < 80
+		)
+		```
+		formatString: #,##0
+		displayFolder: Coverage
+
+	/// Number of files with coverage at or above the 80% threshold
+	measure 'Files Above Threshold' = ```
+		CALCULATE(
+			DISTINCTCOUNT('Fact_CodeQualityFindings'[file_path]),
+			'Fact_CodeQualityFindings'[category] = "coverage",
+			'Fact_CodeQualityFindings'[metric_value] >= 80
+		)
+		```
+		formatString: #,##0
+		displayFolder: Coverage
+
+	/// Coverage threshold constant (80%)
+	measure 'Coverage Threshold' = 80
+		formatString: 0"%"
+		displayFolder: Coverage
+
+	/// Total number of duplicated lines across all repositories
+	measure 'Total Duplicated Lines' = ```
+		CALCULATE(
+			SUM('Fact_CodeQualityFindings'[metric_value]),
+			'Fact_CodeQualityFindings'[category] = "duplication"
+		)
+		```
+		formatString: #,##0
+		displayFolder: Duplication
+
+	/// Duplication percentage: ratio of duplicated findings to total findings
+	measure 'Duplication %' = ```
+		DIVIDE(
+			CALCULATE(
+				COUNTROWS('Fact_CodeQualityFindings'),
+				'Fact_CodeQualityFindings'[category] = "duplication"
+			),
+			COUNTROWS('Fact_CodeQualityFindings'),
+			0
+		)
+		```
+		formatString: 0.0"%"
+		displayFolder: Duplication
+
+	/// Complexity bucket for histogram distribution
+	measure 'Complexity Bucket' = ```
+		SWITCH(
+			TRUE(),
+			SELECTEDVALUE('Fact_CodeQualityFindings'[metric_value]) <= 5, "1-5",
+			SELECTEDVALUE('Fact_CodeQualityFindings'[metric_value]) <= 10, "6-10",
+			SELECTEDVALUE('Fact_CodeQualityFindings'[metric_value]) <= 15, "11-15",
+			SELECTEDVALUE('Fact_CodeQualityFindings'[metric_value]) <= 20, "16-20",
+			"20+"
+		)
+		```
+		displayFolder: Complexity
+
+	/// Count of critical findings (CRITICAL severity)
+	measure 'Critical Findings' = ```
+		CALCULATE(
+			COUNTROWS('Fact_CodeQualityFindings'),
+			'Fact_CodeQualityFindings'[severity] = "CRITICAL"
+		)
+		```
+		formatString: #,##0
+		displayFolder: Overview
+
+	/// Count of high severity findings
+	measure 'High Findings' = ```
+		CALCULATE(
+			COUNTROWS('Fact_CodeQualityFindings'),
+			'Fact_CodeQualityFindings'[severity] = "HIGH"
+		)
+		```
+		formatString: #,##0
+		displayFolder: Overview

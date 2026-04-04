@@ -1,0 +1,38 @@
+/// Relationships between fact and dimension tables
+/// Star schema: Fact_CodeQualityFindings → Repositories, ScanTools, Dim_Date, Languages
+
+/// Fact → Repositories (many-to-one on repo_name)
+relationship Fact_to_Repositories
+	fromTable: Fact_CodeQualityFindings
+	fromColumn: repo_name
+	toTable: Repositories
+	toColumn: repo_name
+	crossFilteringBehavior: oneDirection
+	securityFilteringBehavior: oneDirection
+
+/// Fact → ScanTools (many-to-one on tool_name)
+relationship Fact_to_ScanTools
+	fromTable: Fact_CodeQualityFindings
+	fromColumn: tool_name
+	toTable: ScanTools
+	toColumn: tool_name
+	crossFilteringBehavior: oneDirection
+	securityFilteringBehavior: oneDirection
+
+/// Fact → Dim_Date (many-to-one on scan_date → Date)
+relationship Fact_to_DimDate
+	fromTable: Fact_CodeQualityFindings
+	fromColumn: scan_date
+	toTable: Dim_Date
+	toColumn: Date
+	crossFilteringBehavior: oneDirection
+	securityFilteringBehavior: oneDirection
+
+/// Fact → Languages (many-to-one on language)
+relationship Fact_to_Languages
+	fromTable: Fact_CodeQualityFindings
+	fromColumn: language
+	toTable: Languages
+	toColumn: language
+	crossFilteringBehavior: oneDirection
+	securityFilteringBehavior: oneDirection

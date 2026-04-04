@@ -1,0 +1,58 @@
+/// Dimension table: Languages
+/// Domain-specific dimension for programming language metadata
+/// Maps each language to its linter and coverage tool
+table Languages
+	lineageTag: l1a2b3c4-d5e6-7890-l1a2-b3c4d5e67890
+
+	/// Language identifier — primary key (e.g., typescript, python, csharp, java, go)
+	column language
+		dataType: string
+		isHidden: false
+		lineageTag: l1000001-0000-0000-0000-000000000001
+		summarizeBy: none
+		sourceColumn: language
+		isKey: true
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Human-readable language name (e.g., "TypeScript", "Python", "C#", "Java", "Go")
+	column display_name
+		dataType: string
+		isHidden: false
+		lineageTag: l1000002-0000-0000-0000-000000000002
+		summarizeBy: none
+		sourceColumn: display_name
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Primary linter tool for this language (e.g., "ESLint", "Ruff", "golangci-lint")
+	column linter
+		dataType: string
+		isHidden: false
+		lineageTag: l1000003-0000-0000-0000-000000000003
+		summarizeBy: none
+		sourceColumn: linter
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Primary coverage tool for this language (e.g., "jest", "pytest-cov", "Coverlet")
+	column coverage_tool
+		dataType: string
+		isHidden: false
+		lineageTag: l1000004-0000-0000-0000-000000000004
+		summarizeBy: none
+		sourceColumn: coverage_tool
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Languages = m
+		mode: import
+		source =
+			let
+				Source = LanguagesDataSource
+			in
+				Source
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table

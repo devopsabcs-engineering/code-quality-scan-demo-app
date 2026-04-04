@@ -1,0 +1,74 @@
+parameters:
+  - name: appName
+    type: string
+  - name: resourceGroup
+    type: string
+  - name: appDir
+    type: string
+
+steps:
+  - checkout: self
+
+  - task: AzureCLI@2
+    displayName: 'Create Resource Group'
+    inputs:
+      azureSubscription: '$(serviceConnection)'
+      scriptType: 'bash'
+      scriptLocation: 'inlineScript'
+      inlineScript: |
+        az group create --name ${{ parameters.resourceGroup }} --location $(location)
+
+  - task: AzureCLI@2
+    displayName: 'Deploy Infrastructure'
+    name: infra
+    inputs:
+      azureSubscription: '$(serviceConnection)'
+      scriptType: 'bash'
+      scriptLocation: 'inlineScript'
+      inlineScript: |
+        outputs=$(az deployment group create \
+          --resource-group ${{ parameters.resourceGroup }} \
+          --template-file ${{ parameters.appDir }}/infra/main.bicep \
+          --parameters appName=${{ parameters.appName }} \
+          --query 'properties.outputs' -o json)
+        acrName=$(echo $outputs | jq -r '.acrName.value')
+        appServiceName=$(echo $outputs | jq -r '.appServiceName.value')
+        echo "##vso[task.setvariable variable=acrName;isoutput=true]$acrName"
+        echo "##vso[task.setvariable variable=appServiceName;isoutput=true]$appServiceName"
+
+  - task: AzureCLI@2
+    displayName: 'Build and Push to ACR'
+    inputs:
+      azureSubscription: '$(serviceConnection)'
+      scriptType: 'bash'
+      scriptLocation: 'inlineScript'
+      inlineScript: |
+        az acr build \
+          --registry $(infra.acrName) \
+          --image ${{ parameters.appName }}:$(Build.BuildId) \
+          --image ${{ parameters.appName }}:latest \
+          ${{ parameters.appDir }}
+
+  - task: AzureCLI@2
+    displayName: 'Deploy to Web App for Containers'
+    inputs:
+      azureSubscription: '$(serviceConnection)'
+      scriptType: 'bash'
+      scriptLocation: 'inlineScript'
+      inlineScript: |
+        az webapp config container set \
+          --name $(infra.appServiceName) \
+          --resource-group ${{ parameters.resourceGroup }} \
+          --container-image-name $(infra.acrName).azurecr.io/${{ parameters.appName }}:$(Build.BuildId)
+
+  - task: AzureCLI@2
+    displayName: 'Health Check'
+    inputs:
+      azureSubscription: '$(serviceConnection)'
+      scriptType: 'bash'
+      scriptLocation: 'inlineScript'
+      inlineScript: |
+        APP_URL=$(az webapp show -g ${{ parameters.resourceGroup }} -n $(infra.appServiceName) --query defaultHostName -o tsv)
+        sleep 30
+        curl -sf --retry 5 --retry-delay 10 "https://$APP_URL" || exit 1
+        echo "✅ ${{ parameters.appName }} deployed to https://$APP_URL"

@@ -1,0 +1,110 @@
+# ── Dependencies ──
+node_modules/
+__pycache__/
+*.pyc
+*.pyo
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+.eggs/
+venv/
+.venv/
+env/
+pip-log.txt
+pip-delete-this-directory.txt
+bin/
+obj/
+target/
+vendor/
+
+# ── IDE ──
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln.docstates
+*.swp
+*.swo
+*~
+
+# ── OS ──
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# ── Build outputs ──
+dist/
+out/
+*.js.map
+*.d.ts
+
+# ── Test & Coverage ──
+coverage/
+*.lcov
+.nyc_output/
+htmlcov/
+.coverage
+.coverage.*
+.pytest_cache/
+.ruff_cache/
+test-results/
+TestResults/
+
+# ── Environment ──
+.env
+.env.local
+.env.*.local
+*.env
+
+# ── Docker ──
+docker-compose.override.yml
+
+# ── Next.js ──
+.next/
+out/
+
+# ── .NET ──
+bin/
+obj/
+*.user
+*.userosscache
+*.sln.docstates
+project.lock.json
+packages/
+
+# ── Java ──
+target/
+*.class
+*.jar
+*.war
+*.ear
+hs_err_pid*
+
+# ── Go ──
+vendor/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# ── Power BI ──
+*.pbix
+.pbi/
+localSettings.json
+
+# ── SARIF outputs (generated) ──
+megalinter-reports/
+jscpd-report/
+*.sarif
+
+# ── Temporary files ──
+tmp/
+temp/
+*.tmp
+*.bak
+*.log

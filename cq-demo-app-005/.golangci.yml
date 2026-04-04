@@ -1,0 +1,31 @@
+linters:
+  enable:
+    - govet
+    - errcheck
+    - staticcheck
+    - unused
+    - gosimple
+    - ineffassign
+    - gocritic
+
+linters-settings:
+  govet:
+    enable-all: true
+  errcheck:
+    check-type-assertions: true
+    check-blank: true
+  gocritic:
+    enabled-checks:
+      - dupBranchBody
+      - dupCase
+      - dupSubExpr
+      - unnecessaryBlock
+      - assignOp
+
+run:
+  timeout: 5m
+  tests: true
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
