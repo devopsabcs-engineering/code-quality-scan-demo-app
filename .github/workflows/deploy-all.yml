@@ -66,8 +66,8 @@ jobs:
       - name: Health Check
         run: |
           APP_URL=$(az webapp show -g ${{ matrix.app.rg }} -n ${{ steps.infra.outputs.appServiceName }} --query defaultHostName -o tsv)
-          sleep 30
-          curl -sf --retry 5 --retry-delay 10 "https://$APP_URL" || exit 1
+          sleep 60
+          curl -sf --retry 10 --retry-delay 15 --retry-all-errors "https://$APP_URL" || exit 1
 
       - name: Summary
         run: |
