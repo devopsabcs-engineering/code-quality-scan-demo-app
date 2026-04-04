@@ -42,6 +42,7 @@ jobs:
         run: |
           outputs=$(az deployment group create \
             --resource-group ${{ matrix.app.rg }} \
+            --name "deploy-${{ github.run_id }}" \
             --template-file infra/main.bicep \
             --parameters appName=${{ matrix.app.name }} \
             --query 'properties.outputs' -o json)
