@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/branding/logo-128.png" alt="Agentic Accelerator Framework" width="100">
+</p>
+
 # Code Quality Scan Demo App
 
 [![Code Quality Scan](https://github.com/devopsabcs-engineering/code-quality-scan-demo-app/actions/workflows/code-quality-scan.yml/badge.svg)](https://github.com/devopsabcs-engineering/code-quality-scan-demo-app/actions/workflows/code-quality-scan.yml)
