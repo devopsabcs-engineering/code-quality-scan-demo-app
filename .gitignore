@@ -55,6 +55,10 @@ htmlcov/
 test-results/
 TestResults/
 
+# ── Tool outputs ──
+lizard-output.csv
+cq-demo-app-005/coverage
+
 # ── Environment ──
 .env
 .env.local
