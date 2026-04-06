@@ -1,5 +1,6 @@
 # ── Dependencies ──
 node_modules/
+package-lock.json
 __pycache__/
 *.pyc
 *.pyo
@@ -66,6 +67,7 @@ docker-compose.override.yml
 # ── Next.js ──
 .next/
 out/
+next-env.d.ts
 
 # ── .NET ──
 bin/
