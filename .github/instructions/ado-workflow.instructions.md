@@ -1,5 +1,5 @@
 ---
-description: "Required workflow for Azure DevOps work item tracking, Git branching, pull requests, and branch cleanup in the Agentic Accelerator Framework project."
+description: "Required workflow for Azure DevOps work item tracking, Git branching, pull requests, and branch cleanup in the CodeQuality project."
 applyTo: "**"
 ---
 
@@ -8,7 +8,7 @@ applyTo: "**"
 ## ADO Organization and Project
 
 * Organization: `MngEnvMCAP675646`
-* Project: `Agentic Accelerator Framework`
+* Project: `CodeQuality`
 
 All work items, boards, and test plans live in this project.
 
