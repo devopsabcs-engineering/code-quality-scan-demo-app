@@ -1,38 +1,36 @@
-/// Relationships between fact and dimension tables
-/// Star schema: Fact_CodeQualityFindings → Repositories, ScanTools, Dim_Date, Languages
-
-/// Fact → Repositories (many-to-one on repo_name)
 relationship Fact_to_Repositories
-	fromTable: Fact_CodeQualityFindings
-	fromColumn: repo_name
-	toTable: Repositories
-	toColumn: repo_name
-	crossFilteringBehavior: oneDirection
-	securityFilteringBehavior: oneDirection
+	fromColumn: Fact_CodeQualityFindings.repo_name
+	toColumn: Repositories.repo_name
 
-/// Fact → ScanTools (many-to-one on tool_name)
 relationship Fact_to_ScanTools
-	fromTable: Fact_CodeQualityFindings
-	fromColumn: tool_name
-	toTable: ScanTools
-	toColumn: tool_name
-	crossFilteringBehavior: oneDirection
-	securityFilteringBehavior: oneDirection
+	fromColumn: Fact_CodeQualityFindings.tool_name
+	toColumn: ScanTools.tool_name
 
-/// Fact → Dim_Date (many-to-one on scan_date → Date)
 relationship Fact_to_DimDate
-	fromTable: Fact_CodeQualityFindings
-	fromColumn: scan_date
-	toTable: Dim_Date
-	toColumn: Date
-	crossFilteringBehavior: oneDirection
-	securityFilteringBehavior: oneDirection
+	fromColumn: Fact_CodeQualityFindings.scan_date
+	toColumn: Dim_Date.Date
 
-/// Fact → Languages (many-to-one on language)
 relationship Fact_to_Languages
-	fromTable: Fact_CodeQualityFindings
-	fromColumn: language
-	toTable: Languages
-	toColumn: language
-	crossFilteringBehavior: oneDirection
-	securityFilteringBehavior: oneDirection
+	fromColumn: Fact_CodeQualityFindings.language
+	toColumn: Languages.language
+
+relationship 4693e5cc-54ca-43fe-b90a-965747ae3eab
+	joinOnDateBehavior: datePartOnly
+	fromColumn: Dim_Date.Date
+	toColumn: LocalDateTable_34e9a8e6-dcc0-494d-b196-0a583bdb23cc.Date
+
+relationship 8ae4a058-9106-4235-a449-e90d7d34836e
+	joinOnDateBehavior: datePartOnly
+	fromColumn: Fact_CodeQualityFindings.'Date accessed'
+	toColumn: LocalDateTable_8e32a60f-7a64-4871-95e6-cbbfeec18c7f.Date
+
+relationship 7b196536-bac6-4a24-916d-a6f738c91edd
+	joinOnDateBehavior: datePartOnly
+	fromColumn: Fact_CodeQualityFindings.'Date modified'
+	toColumn: LocalDateTable_1b5cad88-8288-44f5-82a9-6f28977b1bf3.Date
+
+relationship c463edd9-fc65-4255-a187-b19ae1df78ab
+	joinOnDateBehavior: datePartOnly
+	fromColumn: Fact_CodeQualityFindings.'Date created'
+	toColumn: LocalDateTable_45b3c1ad-80f6-48d5-a780-80eebec1b922.Date
+

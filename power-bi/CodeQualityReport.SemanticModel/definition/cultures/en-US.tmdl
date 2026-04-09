@@ -1,0 +1,83 @@
+cultureInfo en-US
+
+	linguisticMetadata =
+			{
+			  "Version": "2.0.0",
+			  "Language": "en-US",
+			  "Entities": {
+			    "fact_codequalityfindings.total_findings": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "Fact_CodeQualityFindings",
+			          "ConceptualProperty": "Total Findings"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Total Findings": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "fact_codequalityfindings.avg_coverage_": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "Fact_CodeQualityFindings",
+			          "ConceptualProperty": "Avg Coverage %"
+			        }
+			      },
+			      "State": "Generated"
+			    },
+			    "fact_codequalityfindings.critical_findings": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "Fact_CodeQualityFindings",
+			          "ConceptualProperty": "Critical Findings"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Critical Findings": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "fact_codequalityfindings.repositories_scanned": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "Fact_CodeQualityFindings",
+			          "ConceptualProperty": "Repositories Scanned"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Repositories Scanned": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    }
+			  }
+			}
+		contentType: json
+

@@ -1,12 +1,21 @@
-@description('Name prefix for storage resources')
-param namePrefix string = 'cqscan'
+@description('Name prefix for storage resources (used with uniqueString for global uniqueness)')
+param namePrefix string = 'stcqscan'
 
 @description('Azure region for all resources')
 param location string = resourceGroup().location
 
-var suffix = uniqueString(resourceGroup().id)
-var storageAccountName = 'st${suffix}'
-var containerName = 'scan-results'
+@description('Principal ID for Storage Blob Data Reader RBAC assignment (e.g., pipeline SP or user object ID)')
+param readerPrincipalId string = ''
+
+@description('Principal type for the RBAC assignment')
+@allowed(['User', 'Group', 'ServicePrincipal'])
+param readerPrincipalType string = 'ServicePrincipal'
+
+var storageAccountName = '${namePrefix}${uniqueString(resourceGroup().id)}'
+var containerName = 'code-quality-results'
+
+// Storage Blob Data Reader role definition ID
+var storageBlobDataReaderRoleId = '2a2b9908-6ea1-4ae2-8e65-a410df84e7d1'
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2023-05-01' = {
   name: storageAccountName
@@ -15,12 +24,19 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2023-05-01' = {
   sku: {
     name: 'Standard_LRS'
   }
+  tags: {
+    Application: 'code-quality-scanner'
+    Department: 'Engineering'
+    Project: 'CodeQuality'
+    ManagedBy: 'Bicep'
+  }
   properties: {
     isHnsEnabled: true
     accessTier: 'Hot'
     supportsHttpsTrafficOnly: true
     minimumTlsVersion: 'TLS1_2'
     allowBlobPublicAccess: false
+    allowSharedKeyAccess: false
     networkAcls: {
       defaultAction: 'Allow'
       bypass: 'AzureServices'
@@ -38,6 +54,17 @@ resource container 'Microsoft.Storage/storageAccounts/blobServices/containers@20
   name: containerName
   properties: {
     publicAccess: 'None'
+  }
+}
+
+// RBAC: Storage Blob Data Reader for Power BI / reporting consumers
+resource blobDataReaderAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (!empty(readerPrincipalId)) {
+  name: guid(storageAccount.id, readerPrincipalId, storageBlobDataReaderRoleId)
+  scope: storageAccount
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', storageBlobDataReaderRoleId)
+    principalId: readerPrincipalId
+    principalType: readerPrincipalType
   }
 }
 

@@ -1,0 +1,59 @@
+parameters:
+  - name: appId
+    type: string
+  - name: repoName
+    type: string
+
+jobs:
+  - job: Scan_${{ parameters.appId }}
+    displayName: 'Scan ${{ parameters.repoName }}'
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+      - checkout: self
+
+      - checkout: git://CodeQuality/code-quality-scan-demo-app@main
+        path: 'scanner'
+
+      - task: UsePythonVersion@0
+        inputs:
+          versionSpec: '3.12'
+
+      - script: |
+          pip install lizard
+          npm install -g jscpd
+        displayName: 'Install scanning tools'
+
+      - script: |
+          npx mega-linter-runner -e VALIDATE_ALL_CODEBASE=true -e SARIF_REPORTER=true
+        displayName: 'Run MegaLinter'
+        workingDirectory: '$(Build.SourcesDirectory)/${{ parameters.repoName }}'
+        continueOnError: true
+
+      - script: |
+          cp -r $(Build.SourcesDirectory)/${{ parameters.repoName }}/megalinter-reports/sarif/*.sarif \
+            $(Build.ArtifactStagingDirectory)/ 2>/dev/null || true
+        displayName: 'Collect MegaLinter SARIF'
+        continueOnError: true
+
+      - script: |
+          lizard --csv $(Build.SourcesDirectory)/${{ parameters.repoName }}/src/ \
+            > $(Build.ArtifactStagingDirectory)/lizard-output.csv 2>/dev/null || true
+          python $(Pipeline.Workspace)/scanner/src/converters/lizard-to-sarif.py \
+            --input $(Build.ArtifactStagingDirectory)/lizard-output.csv \
+            --output $(Build.ArtifactStagingDirectory)/complexity-${{ parameters.appId }}.sarif
+        displayName: 'Run complexity analysis'
+        continueOnError: true
+
+      - task: AdvancedSecurity-Publish@1
+        inputs:
+          SarifFileDirectory: '$(Build.ArtifactStagingDirectory)'
+        displayName: 'Publish SARIF to Advanced Security'
+        condition: always()
+
+      - task: PublishBuildArtifacts@1
+        inputs:
+          PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+          ArtifactName: 'CodeAnalysisLogs'
+        displayName: 'Publish SARIF artifacts'
+        condition: always()

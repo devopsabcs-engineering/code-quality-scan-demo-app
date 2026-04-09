@@ -13,55 +13,28 @@ pool:
 variables:
   - template: variables/common.yml
 
-strategy:
-  matrix:
-    app001:
-      appId: '001'
-      repoName: 'cq-demo-app-001'
-    app002:
-      appId: '002'
-      repoName: 'cq-demo-app-002'
-    app003:
-      appId: '003'
-      repoName: 'cq-demo-app-003'
-    app004:
-      appId: '004'
-      repoName: 'cq-demo-app-004'
-    app005:
-      appId: '005'
-      repoName: 'cq-demo-app-005'
+# This orchestrator triggers the per-app scan pipelines.
+# Each app pipeline runs in its own repo context so that
+# AdvancedSecurity-Publish@1 associates SARIF with the correct repo.
 
-steps:
-  - checkout: self
+jobs:
+  - job: TriggerScans
+    displayName: 'Trigger per-repo code quality scans'
+    steps:
+      - checkout: none
 
-  - task: UsePythonVersion@0
-    inputs:
-      versionSpec: '3.12'
-
-  - script: |
-      pip install lizard
-      pip install jscpd
-    displayName: 'Install scanning tools'
-
-  - script: |
-      npx mega-linter-runner --flavor dotnetweb -e VALIDATE_ALL_CODEBASE=true -e SARIF_REPORTER=true
-    displayName: 'Run MegaLinter on $(repoName)'
-    workingDirectory: $(repoName)
-
-  - script: |
-      lizard --csv $(repoName)/src/ > $(Build.ArtifactStagingDirectory)/lizard-output.csv
-      python src/converters/lizard-to-sarif.py \
-        --input $(Build.ArtifactStagingDirectory)/lizard-output.csv \
-        --output $(Build.ArtifactStagingDirectory)/complexity-$(appId).sarif
-    displayName: 'Run complexity analysis on $(repoName)'
-
-  - task: AdvancedSecurity-Publish@1
-    inputs:
-      SarifFileDirectory: '$(Build.ArtifactStagingDirectory)'
-    displayName: 'Publish SARIF to Advanced Security'
-
-  - task: PublishBuildArtifacts@1
-    inputs:
-      PathtoPublish: '$(Build.ArtifactStagingDirectory)'
-      ArtifactName: 'sarif-results-$(appId)'
-    displayName: 'Publish SARIF artifacts'
+      - script: |
+          set -euo pipefail
+          for APP in 001 002 003 004 005; do
+            PIPELINE_NAME="Code Quality Scan - cq-demo-app-${APP}"
+            echo "Triggering pipeline: ${PIPELINE_NAME}"
+            az pipelines run \
+              --name "${PIPELINE_NAME}" \
+              --branch main \
+              --org "https://dev.azure.com/$(adoOrg)" \
+              --project "$(adoProject)" \
+              --output table || echo "⚠️ Failed to trigger ${PIPELINE_NAME} — it may not exist yet."
+          done
+        displayName: 'Trigger all app scan pipelines'
+        env:
+          AZURE_DEVOPS_EXT_PAT: $(System.AccessToken)

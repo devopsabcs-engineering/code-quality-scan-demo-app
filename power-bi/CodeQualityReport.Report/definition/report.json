@@ -1,61 +1,35 @@
 {
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/report/3.2.0/schema.json",
   "themeCollection": {
     "baseTheme": {
       "name": "CY24SU06",
-      "reportVersionAtImport": "5.56",
+      "reportVersionAtImport": {
+        "visual": "2.7.0",
+        "report": "3.2.0",
+        "page": "2.1.0"
+      },
       "type": "SharedResources"
     }
   },
-  "layoutOptimization": 0,
-  "resourcePackages": [],
-  "sections": [
+  "resourcePackages": [
     {
-      "name": "QualityOverview",
-      "displayName": "Quality Overview",
-      "displayOption": 1,
-      "width": 1280,
-      "height": 720,
-      "ordinal": 0,
-      "config": "{\"visibility\":0}"
-    },
-    {
-      "name": "CoverageTrends",
-      "displayName": "Coverage Trends",
-      "displayOption": 1,
-      "width": 1280,
-      "height": 720,
-      "ordinal": 1,
-      "config": "{\"visibility\":0}"
-    },
-    {
-      "name": "ComplexityAnalysis",
-      "displayName": "Complexity Analysis",
-      "displayOption": 1,
-      "width": 1280,
-      "height": 720,
-      "ordinal": 2,
-      "config": "{\"visibility\":0}"
-    },
-    {
-      "name": "DuplicationReport",
-      "displayName": "Duplication Report",
-      "displayOption": 1,
-      "width": 1280,
-      "height": 720,
-      "ordinal": 3,
-      "config": "{\"visibility\":0}"
-    },
-    {
-      "name": "RepositoryDeepDive",
-      "displayName": "Repository Deep Dive",
-      "displayOption": 1,
-      "width": 1280,
-      "height": 720,
-      "ordinal": 4,
-      "config": "{\"visibility\":0,\"singleVisualGroup\":{\"displayState\":{\"mode\":1}}}"
+      "name": "SharedResources",
+      "type": "SharedResources",
+      "items": [
+        {
+          "name": "CY24SU06",
+          "path": "BaseThemes/CY24SU06.json",
+          "type": "BaseTheme"
+        }
+      ]
     }
   ],
-  "config": "{\"version\":\"5.56\",\"defaultDrillFilterOtherVisuals\":true,\"activeSectionIndex\":0}",
-  "filters": "[]",
-  "publicCustomVisuals": []
+  "settings": {
+    "useStylableVisualContainerHeader": true,
+    "exportDataMode": "AllowSummarized",
+    "defaultDrillFilterOtherVisuals": true,
+    "allowChangeFilterTypes": true,
+    "useEnhancedTooltips": true,
+    "useDefaultAggregateDisplayName": true
+  }
 }

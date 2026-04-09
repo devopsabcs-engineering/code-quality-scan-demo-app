@@ -1,145 +1,93 @@
-/// Dimension table: Dim_Date
-/// DAX-generated calendar table for time intelligence
-/// Auto-generated from the min/max scan_date in Fact_CodeQualityFindings
 table Dim_Date
 	lineageTag: d1a2b3c4-d5e6-7890-d1a2-b3c4d5e67890
-	dataCategory: Time
 
-	/// Calendar date — primary key
 	column Date
 		dataType: dateTime
-		isHidden: false
+		formatString: Long Date
 		lineageTag: d1000001-0000-0000-0000-000000000001
 		summarizeBy: none
-		isKey: true
-		formatString: yyyy-MM-dd
-		isDefaultLabel: true
+		sourceColumn: Date
+
+		variation Variation
+			isDefault
+			relationship: 4693e5cc-54ca-43fe-b90a-965747ae3eab
+			defaultHierarchy: LocalDateTable_34e9a8e6-dcc0-494d-b196-0a583bdb23cc.'Date Hierarchy'
 
 		annotation SummarizationSetBy = Automatic
 
-	/// Calendar year (e.g., 2024, 2025)
+		annotation UnderlyingDateTimeDataType = Date
+
 	column Year
 		dataType: int64
-		isHidden: false
+		formatString: 0
 		lineageTag: d1000002-0000-0000-0000-000000000002
-		summarizeBy: none
-		formatString: 0
+		summarizeBy: sum
+		sourceColumn: Year
 
 		annotation SummarizationSetBy = Automatic
 
-	/// Month number (1-12)
-	column MonthNumber
+	column Month
 		dataType: int64
-		isHidden: false
-		lineageTag: d1000003-0000-0000-0000-000000000003
-		summarizeBy: none
 		formatString: 0
-		sortByColumn: MonthNumber
+		lineageTag: d1000003-0000-0000-0000-000000000003
+		summarizeBy: sum
+		sourceColumn: Month
 
 		annotation SummarizationSetBy = Automatic
 
-	/// Month name (January, February, etc.)
 	column MonthName
 		dataType: string
-		isHidden: false
 		lineageTag: d1000004-0000-0000-0000-000000000004
 		summarizeBy: none
-		sortByColumn: MonthNumber
+		sourceColumn: MonthName
 
-		annotation SummarizationSetBy = Automatic
-
-	/// Month-Year display label (e.g., "Jan 2025", "Feb 2025")
-	column MonthYear
-		dataType: string
-		isHidden: false
-		lineageTag: d1000005-0000-0000-0000-000000000005
-		summarizeBy: none
-		sortByColumn: Date
-
-		annotation SummarizationSetBy = Automatic
-
-	/// Calendar quarter (1-4)
 	column Quarter
 		dataType: int64
-		isHidden: false
+		formatString: 0
 		lineageTag: d1000006-0000-0000-0000-000000000006
-		summarizeBy: none
-		formatString: 0
+		summarizeBy: sum
+		sourceColumn: Quarter
 
 		annotation SummarizationSetBy = Automatic
 
-	/// Quarter label (e.g., "Q1 2025", "Q2 2025")
-	column QuarterLabel
-		dataType: string
-		isHidden: false
-		lineageTag: d1000007-0000-0000-0000-000000000007
-		summarizeBy: none
-		sortByColumn: Date
-
-		annotation SummarizationSetBy = Automatic
-
-	/// Day of the week number (1=Sunday through 7=Saturday)
-	column DayOfWeek
+	column WeekDay
 		dataType: int64
-		isHidden: false
+		formatString: 0
 		lineageTag: d1000008-0000-0000-0000-000000000008
-		summarizeBy: none
-		formatString: 0
+		summarizeBy: sum
+		sourceColumn: WeekDay
 
 		annotation SummarizationSetBy = Automatic
 
-	/// Day of the week name (Sunday, Monday, etc.)
-	column DayOfWeekName
-		dataType: string
-		isHidden: false
-		lineageTag: d1000009-0000-0000-0000-000000000009
-		summarizeBy: none
-		sortByColumn: DayOfWeek
-
-		annotation SummarizationSetBy = Automatic
-
-	/// ISO week number (1-53)
-	column WeekNumber
+	column WeekNum
 		dataType: int64
-		isHidden: false
-		lineageTag: d1000010-0000-0000-0000-000000000010
-		summarizeBy: none
 		formatString: 0
+		lineageTag: d1000010-0000-0000-0000-000000000010
+		summarizeBy: sum
+		sourceColumn: WeekNum
 
 		annotation SummarizationSetBy = Automatic
 
-	/// Flag indicating if the date is today (TRUE/FALSE)
-	column IsToday
-		dataType: boolean
-		isHidden: false
-		lineageTag: d1000011-0000-0000-0000-000000000011
-		summarizeBy: none
-
-		annotation SummarizationSetBy = Automatic
-
-	partition Dim_Date = calculated
+	partition Dim_Date = m
 		mode: import
-		source = ```
-			VAR _MinDate = MIN('Fact_CodeQualityFindings'[scan_date])
-			VAR _MaxDate = MAX('Fact_CodeQualityFindings'[scan_date])
-			VAR _StartDate = IF(ISBLANK(_MinDate), DATE(2024, 1, 1), DATE(YEAR(_MinDate), 1, 1))
-			VAR _EndDate = IF(ISBLANK(_MaxDate), TODAY(), DATE(YEAR(_MaxDate), 12, 31))
-			RETURN
-			ADDCOLUMNS(
-				CALENDAR(_StartDate, _EndDate),
-				"Year", YEAR([Date]),
-				"MonthNumber", MONTH([Date]),
-				"MonthName", FORMAT([Date], "MMMM"),
-				"MonthYear", FORMAT([Date], "MMM YYYY"),
-				"Quarter", QUARTER([Date]),
-				"QuarterLabel", "Q" & FORMAT(QUARTER([Date]), "0") & " " & FORMAT(YEAR([Date]), "0"),
-				"DayOfWeek", WEEKDAY([Date]),
-				"DayOfWeekName", FORMAT([Date], "dddd"),
-				"WeekNumber", WEEKNUM([Date], 2),
-				"IsToday", [Date] = TODAY()
-			)
-			```
+		source =
+				let
+					StartDate = #date(2024, 1, 1),
+					EndDate = #date(2027, 12, 31),
+					DayCount = Duration.Days(EndDate - StartDate) + 1,
+					DateList = List.Dates(StartDate, DayCount, #duration(1, 0, 0, 0)),
+					TableFromList = Table.FromList(DateList, Splitter.SplitByNothing(), {"Date"}, null, ExtraValues.Error),
+					ChangedType = Table.TransformColumnTypes(TableFromList, {{"Date", type date}}),
+					AddYear = Table.AddColumn(ChangedType, "Year", each Date.Year([Date]), Int64.Type),
+					AddMonth = Table.AddColumn(AddYear, "Month", each Date.Month([Date]), Int64.Type),
+					AddMonthName = Table.AddColumn(AddMonth, "MonthName", each Date.MonthName([Date]), type text),
+					AddQuarter = Table.AddColumn(AddMonthName, "Quarter", each Date.QuarterOfYear([Date]), Int64.Type),
+					AddWeekDay = Table.AddColumn(AddQuarter, "WeekDay", each Date.DayOfWeek([Date]), Int64.Type),
+					AddWeekNum = Table.AddColumn(AddWeekDay, "WeekNum", each Date.WeekOfYear([Date]), Int64.Type)
+				in
+					AddWeekNum
 
 	annotation PBI_NavigationStepName = Navigation
 
 	annotation PBI_ResultType = Table
+

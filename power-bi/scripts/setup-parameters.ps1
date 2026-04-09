@@ -80,15 +80,13 @@ if (-not $StorageAccountName) {
     }
 }
 
-$storageUrl = "https://$StorageAccountName.dfs.core.windows.net"
-
 Write-Host "═══════════════════════════════════════════════════════════" -ForegroundColor Cyan
 Write-Host "  Code Quality Report — Data Source Configuration" -ForegroundColor Cyan
 Write-Host "═══════════════════════════════════════════════════════════" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "  Environment:     $Environment" -ForegroundColor White
 Write-Host "  Storage Account: $StorageAccountName" -ForegroundColor White
-Write-Host "  Storage URL:     $storageUrl" -ForegroundColor White
+Write-Host "  DFS Endpoint:    https://$StorageAccountName.dfs.core.windows.net" -ForegroundColor White
 Write-Host "  Container:       $ContainerName" -ForegroundColor White
 Write-Host ""
 
@@ -119,8 +117,8 @@ Write-Host "Updating data source parameters..." -ForegroundColor Yellow
 $parameters = @{
     updateDetails = @(
         @{
-            name  = "StorageAccountUrl"
-            newValue = $storageUrl
+            name  = "StorageAccountName"
+            newValue = $StorageAccountName
         },
         @{
             name  = "ContainerName"
@@ -150,7 +148,7 @@ try {
     Write-Host ""
     Write-Host "   Manual Configuration:" -ForegroundColor Yellow
     Write-Host "   1. Open Power BI service → Workspace → Settings → Parameters" -ForegroundColor White
-    Write-Host "   2. Set StorageAccountUrl = $storageUrl" -ForegroundColor White
+    Write-Host "   2. Set StorageAccountName = $StorageAccountName" -ForegroundColor White
     Write-Host "   3. Set ContainerName = $ContainerName" -ForegroundColor White
     Write-Host ""
 }
@@ -173,7 +171,7 @@ Write-Host ""
 # ─── Validate Connection ───────────────────────────────────────────────────────
 
 Write-Host "Data Source Connection String:" -ForegroundColor Cyan
-Write-Host "  AzureStorage.DataLake(`"$storageUrl/$ContainerName`")" -ForegroundColor White
+Write-Host "  AzureStorage.DataLake(`"https://$StorageAccountName.dfs.core.windows.net/$ContainerName`")" -ForegroundColor White
 Write-Host ""
 Write-Host "Expected ADLS Gen2 Path Structure:" -ForegroundColor Cyan
 Write-Host "  $ContainerName/" -ForegroundColor White

@@ -1,43 +1,60 @@
-/// Fact table: Code Quality Findings
-/// One row per finding from scan results across all repositories and tools
-/// Central fact table in the star schema
 table Fact_CodeQualityFindings
 	lineageTag: f1a2b3c4-d5e6-7890-f1a2-b3c4d5e67890
 
-	/// Unique finding identifier (hash of rule_id + file_path + line_number + scan_date)
+	measure 'Total Findings' = COUNTROWS(Fact_CodeQualityFindings)
+		formatString: 0
+		lineageTag: f1a20001-0000-0000-0000-000000000001
+
+	measure 'Avg Coverage %' = CALCULATE(AVERAGE(Fact_CodeQualityFindings[metric_value]), Fact_CodeQualityFindings[category] = "coverage")
+		formatString: 0.0%
+		lineageTag: f1a20002-0000-0000-0000-000000000002
+
+	measure 'Avg Complexity' = CALCULATE(AVERAGE(Fact_CodeQualityFindings[metric_value]), Fact_CodeQualityFindings[category] = "complexity")
+		formatString: 0.0
+		lineageTag: f1a20003-0000-0000-0000-000000000003
+
+	measure 'Files Below Threshold' = CALCULATE(DISTINCTCOUNT(Fact_CodeQualityFindings[file_path]), Fact_CodeQualityFindings[category] = "coverage", Fact_CodeQualityFindings[metric_value] < 80)
+		formatString: 0
+		lineageTag: f1a20004-0000-0000-0000-000000000004
+
+	measure 'Critical Findings' = CALCULATE(COUNTROWS(Fact_CodeQualityFindings), Fact_CodeQualityFindings[severity] = "CRITICAL")
+		formatString: 0
+		lineageTag: f1a20005-0000-0000-0000-000000000005
+
+	measure 'High Findings' = CALCULATE(COUNTROWS(Fact_CodeQualityFindings), Fact_CodeQualityFindings[severity] = "HIGH")
+		formatString: 0
+		lineageTag: f1a20006-0000-0000-0000-000000000006
+
+	measure 'Repositories Scanned' = DISTINCTCOUNT(Fact_CodeQualityFindings[repo_name])
+		formatString: 0
+		lineageTag: f1a20007-0000-0000-0000-000000000007
+
 	column finding_id
 		dataType: string
-		isHidden: false
 		lineageTag: f1000001-0000-0000-0000-000000000001
 		summarizeBy: none
 		sourceColumn: finding_id
 
 		annotation SummarizationSetBy = Automatic
 
-	/// Source repository name — foreign key to Repositories dimension
 	column repo_name
 		dataType: string
-		isHidden: false
 		lineageTag: f1000002-0000-0000-0000-000000000002
 		summarizeBy: none
 		sourceColumn: repo_name
 
 		annotation SummarizationSetBy = Automatic
 
-	/// Rule or check identifier (e.g., coverage-below-threshold, ccn-exceeded, no-unused-vars)
 	column rule_id
 		dataType: string
-		isHidden: false
 		lineageTag: f1000003-0000-0000-0000-000000000003
 		summarizeBy: none
 		sourceColumn: rule_id
 
 		annotation SummarizationSetBy = Automatic
 
-	/// Severity level: CRITICAL, HIGH, MEDIUM, LOW
 	column severity
 		dataType: string
-		isHidden: false
 		lineageTag: f1000004-0000-0000-0000-000000000004
 		summarizeBy: none
 		sourceColumn: severity
@@ -46,62 +63,48 @@ table Fact_CodeQualityFindings
 
 		annotation PBI_FormatHint = {"ordinal":["CRITICAL","HIGH","MEDIUM","LOW"]}
 
-	/// Scanning tool that produced the finding — foreign key to ScanTools dimension
 	column tool_name
 		dataType: string
-		isHidden: false
 		lineageTag: f1000005-0000-0000-0000-000000000005
 		summarizeBy: none
 		sourceColumn: tool_name
 
 		annotation SummarizationSetBy = Automatic
 
-	/// Date of the scan — foreign key to Dim_Date dimension
 	column scan_date
-		dataType: dateTime
-		isHidden: false
+		dataType: string
 		lineageTag: f1000006-0000-0000-0000-000000000006
 		summarizeBy: none
 		sourceColumn: scan_date
-		formatString: yyyy-MM-dd
 
 		annotation SummarizationSetBy = Automatic
 
-	/// Source file path relative to repository root
 	column file_path
 		dataType: string
-		isHidden: false
 		lineageTag: f1000007-0000-0000-0000-000000000007
 		summarizeBy: none
 		sourceColumn: file_path
 
 		annotation SummarizationSetBy = Automatic
 
-	/// Line number in the source file where the finding was detected
 	column line_number
-		dataType: int64
-		isHidden: false
+		dataType: string
 		lineageTag: f1000008-0000-0000-0000-000000000008
 		summarizeBy: none
 		sourceColumn: line_number
-		formatString: #,##0
 
 		annotation SummarizationSetBy = Automatic
 
-	/// Function or method name where the finding was detected
 	column function_name
 		dataType: string
-		isHidden: false
 		lineageTag: f1000009-0000-0000-0000-000000000009
 		summarizeBy: none
 		sourceColumn: function_name
 
 		annotation SummarizationSetBy = Automatic
 
-	/// Finding category: coverage, complexity, duplication, lint
 	column category
 		dataType: string
-		isHidden: false
 		lineageTag: f1000010-0000-0000-0000-000000000010
 		summarizeBy: none
 		sourceColumn: category
@@ -110,46 +113,113 @@ table Fact_CodeQualityFindings
 
 		annotation PBI_FormatHint = {"ordinal":["coverage","complexity","duplication","lint"]}
 
-	/// Measured value (e.g., cyclomatic complexity number, coverage %, duplicated line count)
 	column metric_value
-		dataType: decimal
-		isHidden: false
+		dataType: string
 		lineageTag: f1000011-0000-0000-0000-000000000011
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: metric_value
-		formatString: #,##0.00
 
 		annotation SummarizationSetBy = Automatic
 
-	/// Threshold that was exceeded to generate this finding
 	column threshold
-		dataType: decimal
-		isHidden: false
+		dataType: string
 		lineageTag: f1000012-0000-0000-0000-000000000012
 		summarizeBy: none
 		sourceColumn: threshold
-		formatString: #,##0.00
 
 		annotation SummarizationSetBy = Automatic
 
-	/// Programming language — foreign key to Languages dimension
 	column language
 		dataType: string
-		isHidden: false
 		lineageTag: f1000013-0000-0000-0000-000000000013
 		summarizeBy: none
 		sourceColumn: language
 
 		annotation SummarizationSetBy = Automatic
 
+	column Name
+		dataType: string
+		lineageTag: 9d459b43-011e-47ed-8eff-da8a6906df5f
+		summarizeBy: none
+		sourceColumn: Name
+
+		annotation SummarizationSetBy = Automatic
+
+	column Extension
+		dataType: string
+		lineageTag: a41783f4-6bf4-49da-b1d2-10df50d5df21
+		summarizeBy: none
+		sourceColumn: Extension
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Date accessed'
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 801a7a59-4c81-48f8-9c34-9dae2cc25c33
+		summarizeBy: none
+		sourceColumn: Date accessed
+
+		variation Variation
+			isDefault
+			relationship: 8ae4a058-9106-4235-a449-e90d7d34836e
+			defaultHierarchy: LocalDateTable_8e32a60f-7a64-4871-95e6-cbbfeec18c7f.'Date Hierarchy'
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Date modified'
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 2c7b27fc-df40-4659-bcca-456c84bb0f76
+		summarizeBy: none
+		sourceColumn: Date modified
+
+		variation Variation
+			isDefault
+			relationship: 7b196536-bac6-4a24-916d-a6f738c91edd
+			defaultHierarchy: LocalDateTable_1b5cad88-8288-44f5-82a9-6f28977b1bf3.'Date Hierarchy'
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Date created'
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: a2f6669b-720a-4896-a49e-d902c6cfb580
+		summarizeBy: none
+		sourceColumn: Date created
+
+		variation Variation
+			isDefault
+			relationship: c463edd9-fc65-4255-a187-b19ae1df78ab
+			defaultHierarchy: LocalDateTable_45b3c1ad-80f6-48d5-a780-80eebec1b922.'Date Hierarchy'
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Folder Path'
+		dataType: string
+		lineageTag: 9eb40843-f32a-439f-a09f-ad1148afa84f
+		summarizeBy: none
+		sourceColumn: Folder Path
+
+		annotation SummarizationSetBy = Automatic
+
 	partition Fact_CodeQualityFindings = m
 		mode: import
 		source =
-			let
-				Source = CodeQualityDataSource
-			in
-				Source
+				let
+					StorageUrl = "https://" & StorageAccountName & ".dfs.core.windows.net/" & ContainerName,
+					Source = AzureStorage.DataLake(StorageUrl),
+					FilteredRows = Table.SelectRows(Source, each Text.EndsWith([Name], ".json")),
+					ParsedContent = Table.AddColumn(FilteredRows, "ParsedJson", each let p = Json.Document([Content]) in if p is list then p else {p}),
+					ExpandedRows = Table.ExpandListColumn(ParsedContent, "ParsedJson"),
+					ExpandedCols = Table.ExpandRecordColumn(ExpandedRows, "ParsedJson",
+						{"finding_id", "repo_name", "rule_id", "severity", "tool_name",
+						 "scan_date", "file_path", "line_number", "function_name",
+						 "category", "metric_value", "threshold", "language"})
+				in
+					ExpandedCols
 
 	annotation PBI_NavigationStepName = Navigation
 
 	annotation PBI_ResultType = Table
+

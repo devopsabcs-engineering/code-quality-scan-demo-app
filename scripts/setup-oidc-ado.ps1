@@ -25,7 +25,7 @@ param(
     [string]$AdoOrg = "MngEnvMCAP675646",
 
     [Parameter(Mandatory = $false)]
-    [string]$AdoProject = "Agentic Accelerator Framework"
+    [string]$AdoProject = "CodeQuality"
 )
 
 $ErrorActionPreference = "Stop"

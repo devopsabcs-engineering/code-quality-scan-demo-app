@@ -1,0 +1,224 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
+  "name": "tbl_details",
+  "position": {
+    "x": 20,
+    "y": 510,
+    "z": 5000,
+    "height": 180,
+    "width": 1240,
+    "tabOrder": 5000
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Fact_CodeQualityFindings"
+                    }
+                  },
+                  "Property": "repo_name"
+                }
+              },
+              "queryRef": "Fact_CodeQualityFindings.repo_name",
+              "nativeQueryRef": "Repository",
+              "active": true
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Fact_CodeQualityFindings"
+                    }
+                  },
+                  "Property": "rule_id"
+                }
+              },
+              "queryRef": "Fact_CodeQualityFindings.rule_id",
+              "nativeQueryRef": "Rule",
+              "active": true
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Fact_CodeQualityFindings"
+                    }
+                  },
+                  "Property": "severity"
+                }
+              },
+              "queryRef": "Fact_CodeQualityFindings.severity",
+              "nativeQueryRef": "Severity",
+              "active": true
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Fact_CodeQualityFindings"
+                    }
+                  },
+                  "Property": "tool_name"
+                }
+              },
+              "queryRef": "Fact_CodeQualityFindings.tool_name",
+              "nativeQueryRef": "Tool",
+              "active": true
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Fact_CodeQualityFindings"
+                    }
+                  },
+                  "Property": "category"
+                }
+              },
+              "queryRef": "Fact_CodeQualityFindings.category",
+              "nativeQueryRef": "Category",
+              "active": true
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Fact_CodeQualityFindings"
+                    }
+                  },
+                  "Property": "file_path"
+                }
+              },
+              "queryRef": "Fact_CodeQualityFindings.file_path",
+              "nativeQueryRef": "File",
+              "active": true
+            }
+          ]
+        }
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Code Quality Finding Details'"
+                }
+              }
+            },
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  },
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "47a2778e349f0d502171",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "Fact_CodeQualityFindings"
+              }
+            },
+            "Property": "repo_name"
+          }
+        },
+        "type": "Categorical"
+      },
+      {
+        "name": "0f178777b1d0113d28d6",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "Fact_CodeQualityFindings"
+              }
+            },
+            "Property": "rule_id"
+          }
+        },
+        "type": "Categorical"
+      },
+      {
+        "name": "00dc5b520769ac62558c",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "Fact_CodeQualityFindings"
+              }
+            },
+            "Property": "severity"
+          }
+        },
+        "type": "Categorical"
+      },
+      {
+        "name": "be6b16f4497c790aa45b",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "Fact_CodeQualityFindings"
+              }
+            },
+            "Property": "tool_name"
+          }
+        },
+        "type": "Categorical"
+      },
+      {
+        "name": "73cdc12d2d52a21ae3be",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "Fact_CodeQualityFindings"
+              }
+            },
+            "Property": "category"
+          }
+        },
+        "type": "Categorical"
+      },
+      {
+        "name": "d249351657ace5aad8a4",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "Fact_CodeQualityFindings"
+              }
+            },
+            "Property": "file_path"
+          }
+        },
+        "type": "Categorical"
+      }
+    ]
+  }
+}

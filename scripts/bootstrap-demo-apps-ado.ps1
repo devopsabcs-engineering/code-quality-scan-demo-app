@@ -37,7 +37,7 @@ param(
     [string]$AdoOrg = "MngEnvMCAP675646",
 
     [Parameter(Mandatory = $false)]
-    [string]$AdoProject = "Agentic Accelerator Framework"
+    [string]$AdoProject = "CodeQuality"
 )
 
 $ErrorActionPreference = "Stop"
@@ -45,11 +45,11 @@ $ErrorActionPreference = "Stop"
 $AdoOrgUrl = "https://dev.azure.com/$AdoOrg"
 $ScannerRepo = "code-quality-scan-demo-app"
 $DemoApps = @(
-    @{ Name = "cq-demo-app-001"; Dir = "cq-demo-app-001" },
-    @{ Name = "cq-demo-app-002"; Dir = "cq-demo-app-002" },
-    @{ Name = "cq-demo-app-003"; Dir = "cq-demo-app-003" },
-    @{ Name = "cq-demo-app-004"; Dir = "cq-demo-app-004" },
-    @{ Name = "cq-demo-app-005"; Dir = "cq-demo-app-005" }
+    @{ Name = "cq-demo-app-001"; Dir = "cq-demo-app-001"; Flavor = "javascript" },
+    @{ Name = "cq-demo-app-002"; Dir = "cq-demo-app-002"; Flavor = "python" },
+    @{ Name = "cq-demo-app-003"; Dir = "cq-demo-app-003"; Flavor = "dotnet" },
+    @{ Name = "cq-demo-app-004"; Dir = "cq-demo-app-004"; Flavor = "java" },
+    @{ Name = "cq-demo-app-005"; Dir = "cq-demo-app-005"; Flavor = "go" }
 )
 
 Write-Host "=== Code Quality ADO Bootstrap ===" -ForegroundColor Cyan
@@ -95,6 +95,8 @@ if ($existingOidcVg) {
 }
 
 # ── Step 3: Create ADO repos and push content ──
+$RootDir = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
+
 foreach ($app in $DemoApps) {
     $repoName = $app.Name
     $appDir = $app.Dir
@@ -111,10 +113,108 @@ foreach ($app in $DemoApps) {
         az repos create --name $repoName --org $AdoOrgUrl --project $AdoProject
     }
 
+    # Sync content — always push the latest template content to the app repo.
+    # Compares a tree hash of the local template against the remote HEAD to
+    # skip the push when content is already up to date.
+    Write-Host "Syncing content to '$repoName'..." -ForegroundColor Green
+    $repoUrl = "https://$AdoOrg@dev.azure.com/$AdoOrg/$AdoProject/_git/$repoName"
+
+    # Export only tracked files (respects .gitignore) via git archive
+    $tempDir = Join-Path ([System.IO.Path]::GetTempPath()) "ado-push-$repoName-$PID"
+    $archiveFile = "$tempDir.zip"
+    try {
+        Push-Location $RootDir
+        git archive --format=zip --output="$archiveFile" "HEAD:$appDir"
+        Pop-Location
+
+        New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
+        Expand-Archive -Path $archiveFile -DestinationPath $tempDir -Force
+        Remove-Item $archiveFile -Force
+
+        Push-Location $tempDir
+        git init | Out-Null
+        git branch -M main
+        git add -A
+
+        # Check if anything differs from what's already in the remote
+        $localTreeHash = git write-tree
+        $needsPush = $true
+
+        $defaultBranch = az repos show --repository $repoName --org $AdoOrgUrl --project $AdoProject --query defaultBranch -o tsv 2>$null
+        if ($defaultBranch -and $defaultBranch -ne "None") {
+            # Repo has content — fetch remote and compare tree hashes
+            git remote add origin $repoUrl 2>$null
+            git fetch origin main --depth=1 2>$null
+            if ($LASTEXITCODE -eq 0) {
+                $remoteTreeHash = git rev-parse "origin/main^{tree}" 2>$null
+                if ($localTreeHash -eq $remoteTreeHash) {
+                    $needsPush = $false
+                    Write-Host "Repository '$repoName' content is up to date — skipping push." -ForegroundColor Yellow
+                }
+            }
+        }
+
+        if ($needsPush) {
+            git commit -m "feat: sync scaffold for $repoName" --allow-empty | Out-Null
+            if (-not (git remote | Select-String -SimpleMatch "origin")) {
+                git remote add origin $repoUrl
+            }
+            git push -u origin main --force 2>&1
+            if ($LASTEXITCODE -ne 0) {
+                Write-Warning "Failed to push to '$repoName'. Verify git credentials for Azure DevOps."
+            } else {
+                Write-Host "Content pushed to '$repoName'." -ForegroundColor Green
+            }
+        }
+        Pop-Location
+    } finally {
+        if (Test-Path $tempDir) { Remove-Item -Recurse -Force $tempDir }
+        if (Test-Path $archiveFile) { Remove-Item -Force $archiveFile }
+    }
+
     Write-Host "✅ ADO repo '$repoName' ready." -ForegroundColor Green
 }
 
-# ── Step 4: Create pipeline definitions ──
+# ── Step 3b: Enable Advanced Security on all repos ──
+Write-Host ""
+Write-Host "--- Enabling Advanced Security on repositories ---" -ForegroundColor Cyan
+
+$projectId = az devops project show --project $AdoProject --org $AdoOrgUrl --query id -o tsv
+
+# Acquire an ADO-scoped bearer token for REST calls
+$adoToken = az account get-access-token --resource "499b84ac-1321-427f-aa17-267ca6975798" --query accessToken -o tsv
+$adoHeaders = @{ Authorization = "Bearer $adoToken"; "Content-Type" = "application/json" }
+$AdvSecBaseUrl = "https://advsec.dev.azure.com/$AdoOrg/$projectId/_apis/management/repositories"
+
+$allRepos = @($ScannerRepo) + ($DemoApps | ForEach-Object { $_.Name })
+foreach ($repo in $allRepos) {
+    $repoId = az repos show --repository $repo --org $AdoOrgUrl --project $AdoProject --query id -o tsv 2>$null
+    if (-not $repoId) {
+        Write-Host "  Repository '$repo' not found — skipping." -ForegroundColor Yellow
+        continue
+    }
+
+    # Check current Advanced Security status via advsec.dev.azure.com
+    $enablementUrl = "$AdvSecBaseUrl/$repoId/enablement?api-version=7.2-preview.1"
+    try {
+        $repoSettings = Invoke-RestMethod -Uri $enablementUrl -Method Get -Headers $adoHeaders
+    } catch {
+        $repoSettings = $null
+    }
+    if ($repoSettings -and $repoSettings.advSecEnabled -eq $true) {
+        Write-Host "  Advanced Security already enabled on '$repo' — skipping." -ForegroundColor Yellow
+    } else {
+        Write-Host "  Enabling Advanced Security on '$repo'..." -ForegroundColor Green
+        try {
+            Invoke-RestMethod -Uri $enablementUrl -Method Patch -Headers $adoHeaders -Body '{"advSecEnabled": true}' -ContentType "application/json" | Out-Null
+            Write-Host "  Advanced Security enabled on '$repo'." -ForegroundColor Green
+        } catch {
+            Write-Warning "  Failed to enable Advanced Security on '$repo': $($_.Exception.Message)"
+        }
+    }
+}
+
+# ── Step 4: Create pipeline definitions (scanner repo) ──
 $pipelines = @(
     @{ Name = "Code Quality Scan"; YamlPath = ".azuredevops/pipelines/code-quality-scan.yml" },
     @{ Name = "Code Quality Lint Gate"; YamlPath = ".azuredevops/pipelines/code-quality-lint-gate.yml" },
@@ -144,6 +244,127 @@ foreach ($pipeline in $pipelines) {
     }
 }
 
+# ── Step 5: Create per-app scan pipelines (app repos) ──
+Write-Host ""
+Write-Host "--- Creating per-app scan pipelines ---" -ForegroundColor Cyan
+
+foreach ($app in $DemoApps) {
+    $repoName = $app.Name
+    $flavor = $app.Flavor
+    $pipelineName = "Code Quality Scan - $repoName"
+    $existingPipeline = az pipelines show --name $pipelineName --org $AdoOrgUrl --project $AdoProject --query id -o tsv 2>$null
+
+    if ($existingPipeline) {
+        Write-Host "Pipeline '$pipelineName' already exists — skipping creation." -ForegroundColor Yellow
+    } else {
+        Write-Host "Creating pipeline '$pipelineName' in repo '$repoName'..." -ForegroundColor Green
+        az pipelines create `
+            --name $pipelineName `
+            --repository $repoName `
+            --repository-type tfsgit `
+            --branch main `
+            --yml-path ".azuredevops/pipelines/code-quality-scan.yml" `
+            --org $AdoOrgUrl `
+            --project $AdoProject `
+            --skip-first-run
+        Write-Host "Pipeline '$pipelineName' created." -ForegroundColor Green
+    }
+
+    # Set the MegaLinter flavor variable on the pipeline (idempotent — overwrites)
+    $pipelineId = az pipelines show --name $pipelineName --org $AdoOrgUrl --project $AdoProject --query id -o tsv 2>$null
+    if ($pipelineId) {
+        Write-Host "  Setting megalinterFlavor='$flavor' on '$pipelineName'..." -ForegroundColor Gray
+        $defUrl = "$AdoOrgUrl/$projectId/_apis/build/definitions/${pipelineId}?api-version=7.1"
+        try {
+            $def = Invoke-RestMethod -Uri $defUrl -Method Get -Headers $adoHeaders
+            # Set variables property via Add-Member to handle missing property on PSObject
+            $varObj = @{ megalinterFlavor = @{ value = $flavor; allowOverride = $true } }
+            $def | Add-Member -NotePropertyName variables -NotePropertyValue $varObj -Force
+            $updatedBody = $def | ConvertTo-Json -Depth 50 -Compress
+            $null = Invoke-RestMethod -Uri $defUrl -Method Put -Headers $adoHeaders -Body $updatedBody -ContentType "application/json"
+            Write-Host "  megalinterFlavor='$flavor' set." -ForegroundColor Green
+        } catch {
+            Write-Warning "  Failed to set megalinterFlavor on '$pipelineName': $($_.Exception.Message)"
+        }
+    }
+}
+
+# ── Step 6: Authorize variable groups and grant pipeline permissions ──
+Write-Host ""
+Write-Host "--- Authorizing variable groups and pipeline permissions ---" -ForegroundColor Cyan
+
+# Acquire an ADO-scoped bearer token for REST calls
+$adoToken = az account get-access-token --resource "499b84ac-1321-427f-aa17-267ca6975798" --query accessToken -o tsv
+$adoHeaders = @{ Authorization = "Bearer $adoToken"; "Content-Type" = "application/json" }
+$apiVersion = "api-version=7.1-preview.1"
+
+function Invoke-AdoPatch {
+    param([string]$Url, [hashtable]$Body)
+    $json = $Body | ConvertTo-Json -Depth 10 -Compress
+    try {
+        $resp = Invoke-RestMethod -Uri $Url -Method Patch -Headers $adoHeaders -Body $json -ContentType "application/json"
+        return $resp
+    } catch {
+        Write-Warning "  REST PATCH failed: $($_.Exception.Message)"
+        return $null
+    }
+}
+
+function Invoke-AdoGet {
+    param([string]$Url)
+    try {
+        return Invoke-RestMethod -Uri $Url -Method Get -Headers $adoHeaders
+    } catch {
+        return $null
+    }
+}
+
+# Authorize variable groups for all pipelines
+foreach ($vg in @($vgName, $oidcVgName)) {
+    $vgId = az pipelines variable-group list --org $AdoOrgUrl --project $AdoProject --query "[?name=='$vg'].id" -o tsv 2>$null
+    if (-not $vgId) { continue }
+
+    $url = "$AdoOrgUrl/$projectId/_apis/pipelines/pipelinepermissions/variablegroup/$vgId`?$apiVersion"
+    $existing = Invoke-AdoGet -Url $url
+    if ($existing -and $existing.allPipelines -and $existing.allPipelines.authorized -eq $true) {
+        Write-Host "Variable group '$vg' already authorized for all pipelines — skipping." -ForegroundColor Yellow
+    } else {
+        Write-Host "Authorizing variable group '$vg' for all pipelines..." -ForegroundColor Green
+        $result = Invoke-AdoPatch -Url $url -Body @{
+            resource     = @{ id = $vgId; type = "variablegroup" }
+            allPipelines = @{ authorized = $true }
+            pipelines    = @()
+        }
+        if ($result) {
+            Write-Host "Variable group '$vg' authorized." -ForegroundColor Green
+        } else {
+            Write-Warning "Failed to authorize variable group '$vg'. Authorize manually in Pipelines > Library."
+        }
+    }
+}
+
+# Authorize the scanner repo for all pipelines (per-app pipelines check it out)
+$scannerRepoId = az repos show --repository $ScannerRepo --org $AdoOrgUrl --project $AdoProject --query id -o tsv 2>$null
+if ($scannerRepoId) {
+    $url = "$AdoOrgUrl/$projectId/_apis/pipelines/pipelinepermissions/repository/$projectId.$scannerRepoId`?$apiVersion"
+    $existing = Invoke-AdoGet -Url $url
+    if ($existing -and $existing.allPipelines -and $existing.allPipelines.authorized -eq $true) {
+        Write-Host "Scanner repo already authorized for all pipelines — skipping." -ForegroundColor Yellow
+    } else {
+        Write-Host "Authorizing scanner repo for all pipelines..." -ForegroundColor Green
+        $result = Invoke-AdoPatch -Url $url -Body @{
+            resource     = @{ id = "$projectId.$scannerRepoId"; type = "repository" }
+            allPipelines = @{ authorized = $true }
+            pipelines    = @()
+        }
+        if ($result) {
+            Write-Host "Scanner repo authorized for all pipelines." -ForegroundColor Green
+        } else {
+            Write-Warning "Failed to authorize scanner repo. Authorize manually."
+        }
+    }
+}
+
 Write-Host ""
 Write-Host "=== ADO Bootstrap Complete ===" -ForegroundColor Cyan
-Write-Host "All ADO repos, variable groups, and pipelines have been configured."
+Write-Host "All ADO repos, variable groups, pipelines, and permissions have been configured."

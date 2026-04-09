@@ -1,135 +1,14 @@
-/// Power Query M expressions for data source connections
-/// Connects to Azure Data Lake Storage Gen2 for code quality scan results
+expression StorageAccountName = "stcqscanq3bamzbhjoemq" meta [IsParameterQuery=true, Type="Text", IsParameterQueryRequired=true]
+	lineageTag: e1f2a3b4-c5d6-7890-abcd-ef1234500001
 
-/// ADLS Gen2 data source for code quality scan results
-/// Authentication: OAuth (Organizational Account)
-/// Path pattern: {yyyy}/{MM}/{dd}/{appId}-{tool}.json
-expression CodeQualityDataSource =
-	let
-		StorageAccountUrl = "https://stcqscan.dfs.core.windows.net",
-		ContainerName = "code-quality-results",
-		Source = AzureStorage.DataLake(StorageAccountUrl & "/" & ContainerName),
-		#"Filtered Rows" = Table.SelectRows(Source, each Text.EndsWith([Name], ".json")),
-		#"Parsed JSON" = Table.TransformColumns(#"Filtered Rows", {{"Content", each Json.Document(_)}}),
-		#"Expanded Content" = Table.ExpandRecordColumn(#"Parsed JSON", "Content", 
-			{"finding_id", "repo_name", "rule_id", "severity", "tool_name", "scan_date", 
-			 "file_path", "line_number", "function_name", "category", "metric_value", 
-			 "threshold", "language"}),
-		#"Changed Types" = Table.TransformColumnTypes(#"Expanded Content", {
-			{"finding_id", type text},
-			{"repo_name", type text},
-			{"rule_id", type text},
-			{"severity", type text},
-			{"tool_name", type text},
-			{"scan_date", type date},
-			{"file_path", type text},
-			{"line_number", Int64.Type},
-			{"function_name", type text},
-			{"category", type text},
-			{"metric_value", type number},
-			{"threshold", type number},
-			{"language", type text}
-		})
-	in
-		#"Changed Types"
-	type table [
-		finding_id = text,
-		repo_name = text,
-		rule_id = text,
-		severity = text,
-		tool_name = text,
-		scan_date = date,
-		file_path = text,
-		line_number = number,
-		function_name = text,
-		category = text,
-		metric_value = number,
-		threshold = number,
-		language = text
-	]
-	lineageTag: a1b2c3d4-e5f6-7890-abcd-ef1234567890
-	queryGroup: DataSources
+	annotation PBI_NavigationStepName = Navigation
 
-/// ADLS Gen2 data source for repository metadata
-expression RepositoriesDataSource =
-	let
-		StorageAccountUrl = "https://stcqscan.dfs.core.windows.net",
-		ContainerName = "code-quality-results",
-		Source = AzureStorage.DataLake(StorageAccountUrl & "/" & ContainerName & "/metadata"),
-		RepoFile = Source{[Name="repositories.json"]}[Content],
-		Parsed = Json.Document(RepoFile),
-		#"Converted to Table" = Table.FromList(Parsed, Splitter.SplitByNothing(), null, null, ExtraValues.Error),
-		#"Expanded Column" = Table.ExpandRecordColumn(#"Converted to Table", "Column1",
-			{"repo_name", "org", "url", "scan_domain"}),
-		#"Changed Types" = Table.TransformColumnTypes(#"Expanded Column", {
-			{"repo_name", type text},
-			{"org", type text},
-			{"url", type text},
-			{"scan_domain", type text}
-		})
-	in
-		#"Changed Types"
-	type table [
-		repo_name = text,
-		org = text,
-		url = text,
-		scan_domain = text
-	]
-	lineageTag: b2c3d4e5-f6a7-8901-bcde-f12345678901
-	queryGroup: DataSources
+	annotation PBI_ResultType = Text
 
-/// ADLS Gen2 data source for scan tool metadata
-expression ScanToolsDataSource =
-	let
-		StorageAccountUrl = "https://stcqscan.dfs.core.windows.net",
-		ContainerName = "code-quality-results",
-		Source = AzureStorage.DataLake(StorageAccountUrl & "/" & ContainerName & "/metadata"),
-		ToolsFile = Source{[Name="scan-tools.json"]}[Content],
-		Parsed = Json.Document(ToolsFile),
-		#"Converted to Table" = Table.FromList(Parsed, Splitter.SplitByNothing(), null, null, ExtraValues.Error),
-		#"Expanded Column" = Table.ExpandRecordColumn(#"Converted to Table", "Column1",
-			{"tool_name", "display_name", "version", "category"}),
-		#"Changed Types" = Table.TransformColumnTypes(#"Expanded Column", {
-			{"tool_name", type text},
-			{"display_name", type text},
-			{"version", type text},
-			{"category", type text}
-		})
-	in
-		#"Changed Types"
-	type table [
-		tool_name = text,
-		display_name = text,
-		version = text,
-		category = text
-	]
-	lineageTag: c3d4e5f6-a7b8-9012-cdef-123456789012
-	queryGroup: DataSources
+expression ContainerName = "code-quality-results" meta [IsParameterQuery=true, Type="Text", IsParameterQueryRequired=true]
+	lineageTag: e1f2a3b4-c5d6-7890-abcd-ef1234500002
 
-/// ADLS Gen2 data source for language metadata
-expression LanguagesDataSource =
-	let
-		StorageAccountUrl = "https://stcqscan.dfs.core.windows.net",
-		ContainerName = "code-quality-results",
-		Source = AzureStorage.DataLake(StorageAccountUrl & "/" & ContainerName & "/metadata"),
-		LangFile = Source{[Name="languages.json"]}[Content],
-		Parsed = Json.Document(LangFile),
-		#"Converted to Table" = Table.FromList(Parsed, Splitter.SplitByNothing(), null, null, ExtraValues.Error),
-		#"Expanded Column" = Table.ExpandRecordColumn(#"Converted to Table", "Column1",
-			{"language", "display_name", "linter", "coverage_tool"}),
-		#"Changed Types" = Table.TransformColumnTypes(#"Expanded Column", {
-			{"language", type text},
-			{"display_name", type text},
-			{"linter", type text},
-			{"coverage_tool", type text}
-		})
-	in
-		#"Changed Types"
-	type table [
-		language = text,
-		display_name = text,
-		linter = text,
-		coverage_tool = text
-	]
-	lineageTag: d4e5f6a7-b8c9-0123-defa-234567890123
-	queryGroup: DataSources
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Text
+

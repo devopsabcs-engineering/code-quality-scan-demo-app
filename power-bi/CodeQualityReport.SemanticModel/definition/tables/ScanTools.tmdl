@@ -1,43 +1,33 @@
-/// Dimension table: ScanTools
-/// Metadata for each scanning tool used in the code quality pipeline
 table ScanTools
 	lineageTag: s1a2b3c4-d5e6-7890-s1a2-b3c4d5e67890
 
-	/// Tool name identifier — primary key (e.g., eslint, ruff, jscpd, lizard, megalinter)
 	column tool_name
 		dataType: string
-		isHidden: false
+		isKey
 		lineageTag: s1000001-0000-0000-0000-000000000001
 		summarizeBy: none
 		sourceColumn: tool_name
-		isKey: true
 
 		annotation SummarizationSetBy = Automatic
 
-	/// Human-readable display name for reports (e.g., "ESLint", "Ruff", "jscpd")
 	column display_name
 		dataType: string
-		isHidden: false
 		lineageTag: s1000002-0000-0000-0000-000000000002
 		summarizeBy: none
 		sourceColumn: display_name
 
 		annotation SummarizationSetBy = Automatic
 
-	/// Tool version string (e.g., "9.x", "0.5.x", "8.x")
 	column version
 		dataType: string
-		isHidden: false
 		lineageTag: s1000003-0000-0000-0000-000000000003
 		summarizeBy: none
 		sourceColumn: version
 
 		annotation SummarizationSetBy = Automatic
 
-	/// Tool category: linter, duplication, complexity, coverage, orchestrator
 	column category
 		dataType: string
-		isHidden: false
 		lineageTag: s1000004-0000-0000-0000-000000000004
 		summarizeBy: none
 		sourceColumn: category
@@ -47,11 +37,18 @@ table ScanTools
 	partition ScanTools = m
 		mode: import
 		source =
-			let
-				Source = ScanToolsDataSource
-			in
-				Source
+				let
+					StorageUrl = "https://" & StorageAccountName & ".dfs.core.windows.net/" & ContainerName,
+					Source = AzureStorage.DataLake(StorageUrl),
+					FilteredRows = Table.SelectRows(Source, each [Name] = "scan-tools.json" and Text.Contains([Folder Path], "metadata")),
+					ParsedContent = Table.AddColumn(FilteredRows, "ParsedJson", each let p = Json.Document([Content]) in if p is list then p else {p}),
+					ExpandedRows = Table.ExpandListColumn(ParsedContent, "ParsedJson"),
+					ExpandedCols = Table.ExpandRecordColumn(ExpandedRows, "ParsedJson", {"tool_name", "display_name", "version", "category"}),
+					SelectedCols = Table.SelectColumns(ExpandedCols, {"tool_name", "display_name", "version", "category"})
+				in
+					SelectedCols
 
 	annotation PBI_NavigationStepName = Navigation
 
 	annotation PBI_ResultType = Table
+

@@ -1,0 +1,111 @@
+# Code Quality Scan pipeline for individual app repos.
+# This pipeline runs in the context of the app repo so that
+# AdvancedSecurity-Publish@1 associates SARIF with this repo.
+#
+# Triggered manually or by the orchestrator pipeline in the scanner repo.
+#
+# Set pipeline variable 'megalinterFlavor' to the MegaLinter flavor for this
+# app's language (e.g. javascript, python, dotnet, java, go). Falls back to
+# the cupcake flavor if not set.
+
+trigger: none
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+resources:
+  repositories:
+    - repository: scanner
+      type: git
+      name: CodeQuality/code-quality-scan-demo-app
+      ref: main
+
+steps:
+  - checkout: self
+    path: 'app'
+
+  - checkout: scanner
+    path: 'scanner'
+
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '3.12'
+
+  # Free disk space — the MegaLinter Docker image is large
+  - script: |
+      sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /usr/local/share/boost
+      sudo docker image prune -af
+      df -h /
+    displayName: 'Free disk space'
+
+  - script: |
+      pip install lizard
+    displayName: 'Install scanning tools'
+
+  - script: |
+      npx mega-linter-runner --flavor $(megalinterFlavor) \
+        -e VALIDATE_ALL_CODEBASE=true \
+        -e SARIF_REPORTER=true
+    displayName: 'Run MegaLinter ($(megalinterFlavor))'
+    workingDirectory: '$(Pipeline.Workspace)/app'
+    continueOnError: true
+
+  - script: |
+      mkdir -p $(Build.ArtifactStagingDirectory)
+      # Copy MegaLinter SARIF and fix paths from Docker container (/tmp/lint/)
+      # to be relative to the repo root so Scans tab links work
+      for f in $(Pipeline.Workspace)/app/megalinter-reports/sarif/*.sarif; do
+        [ -f "$f" ] || continue
+        sed 's|/tmp/lint/||g' "$f" > $(Build.ArtifactStagingDirectory)/$(basename "$f")
+      done
+    displayName: 'Collect MegaLinter SARIF'
+    continueOnError: true
+
+  - script: |
+      SRC_DIR="$(Pipeline.Workspace)/app/src"
+      if [ ! -d "$SRC_DIR" ]; then
+        SRC_DIR="$(Pipeline.Workspace)/app"
+      fi
+      lizard --csv "$SRC_DIR" \
+        > $(Build.ArtifactStagingDirectory)/lizard-output.csv 2>/dev/null || true
+      # Fix absolute paths in lizard CSV to be repo-relative before conversion
+      sed -i "s|$(Pipeline.Workspace)/app/||g" \
+        $(Build.ArtifactStagingDirectory)/lizard-output.csv 2>/dev/null || true
+      python $(Pipeline.Workspace)/scanner/src/converters/lizard-to-sarif.py \
+        --input $(Build.ArtifactStagingDirectory)/lizard-output.csv \
+        --output $(Build.ArtifactStagingDirectory)/complexity.sarif
+    displayName: 'Run complexity analysis'
+    continueOnError: true
+
+  # Fix all SARIF uris to be repo-relative (strip any remaining absolute paths)
+  - script: |
+      cd $(Build.ArtifactStagingDirectory)
+      for f in *.sarif; do
+        [ -f "$f" ] || continue
+        # Remove any absolute path prefix, keep repo-relative paths
+        sed -i "s|$(Pipeline.Workspace)/app/||g" "$f"
+        sed -i 's|/home/vsts/work/[^/]*/s/[^/]*/||g' "$f"
+      done
+    displayName: 'Normalize SARIF paths'
+    continueOnError: true
+
+  # Copy SARIF to the directory AdvancedSecurity-Publish@1 actually reads from
+  - script: |
+      ADVSEC_DIR="$(Agent.TempDirectory)/.advsec"
+      mkdir -p "$ADVSEC_DIR"
+      cp $(Build.ArtifactStagingDirectory)/*.sarif "$ADVSEC_DIR/" 2>/dev/null || true
+      echo "SARIF files in $ADVSEC_DIR:"
+      ls -la "$ADVSEC_DIR/"*.sarif 2>/dev/null || echo "  (none)"
+    displayName: 'Stage SARIF for Advanced Security'
+    condition: always()
+
+  - task: AdvancedSecurity-Publish@1
+    displayName: 'Publish SARIF to Advanced Security'
+    condition: always()
+
+  - task: PublishBuildArtifacts@1
+    inputs:
+      PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+      ArtifactName: 'CodeAnalysisLogs'
+    displayName: 'Publish SARIF artifacts'
+    condition: always()

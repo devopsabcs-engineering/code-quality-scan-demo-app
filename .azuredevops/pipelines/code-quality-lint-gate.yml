@@ -12,7 +12,7 @@ steps:
   - checkout: self
 
   - script: |
-      npx mega-linter-runner --flavor dotnetweb -e VALIDATE_ALL_CODEBASE=false -e SARIF_REPORTER=true
+      npx mega-linter-runner -e VALIDATE_ALL_CODEBASE=false -e SARIF_REPORTER=true
     displayName: 'Run MegaLinter (changed files only)'
 
   - script: |

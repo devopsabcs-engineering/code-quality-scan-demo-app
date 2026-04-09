@@ -7,8 +7,51 @@ variables:
   - template: variables/common.yml
 
 stages:
+  - stage: DeployStorage
+    displayName: 'Deploy ADLS Gen2 Storage'
+    jobs:
+      - job: DeployADLS
+        displayName: 'Deploy ADLS Gen2 for scan results'
+        steps:
+          - checkout: self
+
+          - task: AzureCLI@2
+            displayName: 'Create Storage Resource Group'
+            inputs:
+              azureSubscription: '$(serviceConnection)'
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                az group create --name $(storageResourceGroup) --location $(location)
+
+          - task: AzureCLI@2
+            displayName: 'Deploy ADLS Gen2 (uniqueString naming)'
+            name: storage
+            inputs:
+              azureSubscription: '$(serviceConnection)'
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                outputs=$(az deployment group create \
+                  --resource-group $(storageResourceGroup) \
+                  --name "deploy-storage-$(Build.BuildId)" \
+                  --template-file infra/storage.bicep \
+                  --query 'properties.outputs' -o json)
+                STORAGE_NAME=$(echo $outputs | jq -r '.storageAccountName.value')
+                CONTAINER=$(echo $outputs | jq -r '.containerName.value')
+                DFS_ENDPOINT=$(echo $outputs | jq -r '.dfsEndpoint.value')
+                echo "##vso[task.setvariable variable=storageAccountName;isoutput=true]$STORAGE_NAME"
+                echo "##vso[task.setvariable variable=containerName;isoutput=true]$CONTAINER"
+                echo "##vso[task.setvariable variable=dfsEndpoint;isoutput=true]$DFS_ENDPOINT"
+                echo "Storage Account: $STORAGE_NAME"
+                echo "Container: $CONTAINER"
+                echo "DFS Endpoint: $DFS_ENDPOINT"
+
   - stage: Deploy
     displayName: 'Deploy All Demo Apps'
+    dependsOn: DeployStorage
+    variables:
+      storageAccountName: $[ stageDependencies.DeployStorage.DeployADLS.outputs['storage.storageAccountName'] ]
     jobs:
       - job: DeployApp001
         displayName: 'Deploy cq-demo-app-001'
