@@ -27,9 +27,25 @@ jobs:
           VALIDATE_ALL_CODEBASE: true
           SARIF_REPORTER: true
 
-      - name: Upload SARIF
-        uses: github/codeql-action/upload-sarif@v4
+      - name: Upload SARIF artifact
         if: always()
+        uses: actions/upload-artifact@v4
         with:
-          sarif_file: megalinter-reports/megalinter-report.sarif
-          category: code-quality-scan/${{ matrix.app }}
+          name: megalinter-sarif-${{ matrix.app }}
+          path: megalinter-reports/megalinter-report.sarif
+
+      - name: Upload SARIF to target repo
+        if: always() && hashFiles('megalinter-reports/megalinter-report.sarif') != ''
+        env:
+          GH_TOKEN: ${{ secrets.ORG_ADMIN_TOKEN }}
+        run: |
+          SARIF_CONTENT=$(gzip -c megalinter-reports/megalinter-report.sarif | base64 -w0)
+          COMMIT_SHA=$(gh api repos/devopsabcs-engineering/cq-demo-app-${{ matrix.app }}/commits/main --jq '.sha')
+          RESPONSE=$(gh api \
+            --method POST \
+            repos/devopsabcs-engineering/cq-demo-app-${{ matrix.app }}/code-scanning/sarifs \
+            -f "commit_sha=$COMMIT_SHA" \
+            -f "ref=refs/heads/main" \
+            -f "sarif=$SARIF_CONTENT")
+          echo "Upload response: $RESPONSE"
+          echo "Uploaded MegaLinter SARIF to cq-demo-app-${{ matrix.app }}"
