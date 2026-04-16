@@ -23,6 +23,7 @@ jobs:
 
       - name: Run MegaLinter
         uses: oxsecurity/megalinter@v8
+        continue-on-error: true
         env:
           VALIDATE_ALL_CODEBASE: true
           SARIF_REPORTER: true
@@ -39,13 +40,11 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.ORG_ADMIN_TOKEN }}
         run: |
-          SARIF_CONTENT=$(gzip -c megalinter-reports/megalinter-report.sarif | base64 -w0)
+          gzip -c megalinter-reports/megalinter-report.sarif | base64 -w0 > /tmp/sarif_encoded.txt
           COMMIT_SHA=$(gh api repos/devopsabcs-engineering/cq-demo-app-${{ matrix.app }}/commits/main --jq '.sha')
-          RESPONSE=$(gh api \
-            --method POST \
+          jq -n --arg sha "$COMMIT_SHA" --arg ref "refs/heads/main" --rawfile sarif /tmp/sarif_encoded.txt \
+            '{commit_sha: $sha, ref: $ref, sarif: $sarif}' | \
+          gh api --method POST \
             repos/devopsabcs-engineering/cq-demo-app-${{ matrix.app }}/code-scanning/sarifs \
-            -f "commit_sha=$COMMIT_SHA" \
-            -f "ref=refs/heads/main" \
-            -f "sarif=$SARIF_CONTENT")
-          echo "Upload response: $RESPONSE"
+            --input -
           echo "Uploaded MegaLinter SARIF to cq-demo-app-${{ matrix.app }}"
